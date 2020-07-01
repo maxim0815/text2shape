@@ -1,6 +1,18 @@
 import yaml
 
-def config_parser(config_file):
+
+def pretty_config_print(config):
+    print('_' * 37 + "CONFIG" + '_'*37)
+    for key, val in config.items():
+        if type(val) is dict:
+            for k, v in val.items():
+                print(k + '.' * (80 - len(k) - len(str(v))) + str(v))
+        else:
+            print(key + '.' * (80 - len(key) - len(str(val))) + str(val))
+    print(80 * '_')
+
+
+def config_parser(config_file, print_config=True):
 	with open(config_file, "r") as ymlfile: 
 		cfg = yaml.load(ymlfile)
 
@@ -32,5 +44,8 @@ def config_parser(config_file):
 		raise Exception("Check config file - model dir not given")
 	if 'tensorboard' not in dir_:
 		raise Exception("Check config file - tensorboard dir not given")
+
+	if print_config:
+		pretty_config_print(cfg)
 
 	return cfg 

@@ -10,16 +10,16 @@ def parse_arguments():
     return args
 
 def main(config):
-	hyper_parameters = config['hyper_parameters']
-	dirs = config['directories']
+    hyper_parameters = config['hyper_parameters']
+    dirs = config['directories']
 
-	stats = ["loss", "accuracy"]
-	tensorboard = Evaluation(dirs['tensorboard'], config['name'], stats, hyper_parameters)
-	
-	# TODO:
+    stats = ["loss", "accuracy"]
+    tensorboard = Evaluation(dirs['tensorboard'], config['name'], stats, hyper_parameters)
+    
+    # TODO:
 
 
 if __name__ == '__main__':
     args = parse_arguments()
-    config = config_parser(args.config)
+    config = config_parser(args.config, print_config=True)
     main(config)
