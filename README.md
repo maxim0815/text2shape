@@ -11,5 +11,11 @@ Download and add to data folder:
 * Text Descriptions
 * Solid Voxelizations: 32 Resolution
 
+### Dependencies
+* pynrrd 0.4.2 :
+  ```
+  pip install pynrrd
+  ```
+
 
 
