@@ -12,9 +12,10 @@ Download and add to data folder:
 * Solid Voxelizations: 32 Resolution
 
 ### Dependencies
-```
-pip install pynrrd
-```
+* pynrrd 0.4.2 :
+  ```
+  pip install pynrrd
+  ```
 
 
 
