@@ -4,6 +4,7 @@
 *.pth
 *.ckpt
 data/
+tools/
 
 
 # Byte-compiled / optimized / DLL files
