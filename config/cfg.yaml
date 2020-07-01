@@ -1,10 +1,11 @@
+name: "embeddings"
 hyper_parameters:
   lr: 0.001
   bs: 64
   mom: 0.9
   wd: 0.0001
 directories:
-  data: "data"
-  output: "output"
-  model: "model"
-  log: "log"
+  data: "data/"
+  output: "output/"
+  model: "model/"
+  tensorboard: "tensorboard/"

@@ -1,5 +1,7 @@
 import argparse
+
 from utils.ConfigParser import config_parser
+from utils.TensorboardEvaluation import Evaluation
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
@@ -9,7 +11,10 @@ def parse_arguments():
 
 def main(config):
 	hyper_parameters = config['hyper_parameters']
-	directories = config['directories']
+	dirs = config['directories']
+
+	stats = ["loss", "accuracy"]
+	tensorboard = Evaluation(dirs['tensorboard'], config['name'], stats, hyper_parameters)
 	
 	# TODO:
 

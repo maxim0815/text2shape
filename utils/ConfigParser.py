@@ -5,6 +5,8 @@ def config_parser(config_file):
 		cfg = yaml.load(ymlfile)
 
 	# check if all data are given in config file
+	if 'name' not in cfg:
+		raise Exception("Check config file - No name within config file")
 	if 'hyper_parameters' not in cfg:
 		raise Exception("Check config file - No hyper parameters within config file")
 	if 'directories' not in cfg:
@@ -28,7 +30,7 @@ def config_parser(config_file):
 		raise Exception("Check config file - output dir not given")
 	if 'model' not in dir_:
 		raise Exception("Check config file - model dir not given")
-	if 'log' not in dir_:
-		raise Exception("Check config file - log dir not given")
+	if 'tensorboard' not in dir_:
+		raise Exception("Check config file - tensorboard dir not given")
 
 	return cfg 
