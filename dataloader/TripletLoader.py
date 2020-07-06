@@ -6,6 +6,7 @@ import numpy as np
 import sys
 import os
 
+from dataloader.TextDataVectorization import TxtVectorization
 
 class Triplet(object):
     def __init__(self, shape, pos_desc, neg_desc):
@@ -40,6 +41,11 @@ class TripletLoader(data.Dataset):
         except:
             sys.exit("ERROR! Triplet loader can't load given data")
 
+        try:
+            self.txt_vectorization = TxtVectorization(config['directories']['vocabulary'])
+        except:
+            sys.exit("ERROR! Triplet loader can't load given vocabulary")        
+
         self.triplet_list = []
 
         # TODO: seed to config?
@@ -60,9 +66,14 @@ class TripletLoader(data.Dataset):
             pos_idx = self.find_positive_description_idx(shape_id)
             for pos_id in pos_idx:
                 shape = self.shapes["data"][i]
+
                 pos_desc = self.descriptions["description"][pos_id]
+                pos_desc = self.txt_vectorization.description2vector(pos_desc)
+
                 neg_id = self.find_negative_desciption_id(shape_id)
                 neg_desc = self.descriptions["description"][neg_id]
+                neg_desc = self.txt_vectorization.description2vector(neg_desc)
+
                 triplet = Triplet(shape, pos_desc, neg_desc)
                 self.triplet_list.append(triplet)
             print('Generating triplet list {:.2f} %'.format(

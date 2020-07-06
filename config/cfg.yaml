@@ -7,6 +7,7 @@ hyper_parameters:
 directories:
   train_data: "data/few_shapes/"
   train_labels: "data/captions.tablechair.csv"
+  vocabulary: "data/full_voc.csv"
   output: "output/"
   model: "model/"
   tensorboard: "tensorboard/"
