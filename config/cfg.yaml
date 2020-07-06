@@ -5,7 +5,8 @@ hyper_parameters:
   mom: 0.9
   wd: 0.0001
 directories:
-  data: "data/"
+  train_data: "data/nrrd_256_filter_div_32_solid/"
+  train_labels: "data/captions.tablechair.csv"
   output: "output/"
   model: "model/"
   tensorboard: "tensorboard/"
