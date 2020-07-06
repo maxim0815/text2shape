@@ -16,6 +16,8 @@ def main(config):
     dirs = config['directories']
 
     dataloader = TripletLoader(config)
+
+    batch = dataloader.get_batch()
     
 
     stats = ["loss", "accuracy"]
