@@ -5,13 +5,10 @@
 *.ckpt
 data/
 tools/
-renders/
 
 # tensorboard logs
 *events.out.tfevents.*
 
-# vscode
-*.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

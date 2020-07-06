@@ -16,16 +16,6 @@ Download and add to data folder:
   ```
   pip install pynrrd
   ```
-* spacy-2.3.0 :
-  ```
-  pip install spacy
-  python3 -m spacy download en_core_web_sm
-  ```
-
-* language-tool-python-2.2.3 :
-  ```
-  pip install language-tool-python
-  ```
 
 
 
