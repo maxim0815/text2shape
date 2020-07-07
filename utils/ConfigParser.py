@@ -38,8 +38,12 @@ def config_parser(config_file, print_config=True):
 	if 'ep' not in hp_:
 		raise Exception("Check config file - ep not given")
 
-	if 'data' not in dir_:
-		raise Exception("Check config file - data dir not given")
+	if 'train_data' not in dir_:
+		raise Exception("Check config file - train_data dir not given")
+	if 'train_labels' not in dir_:
+		raise Exception("Check config file - train_labels dir not given")
+	if 'vocabulary' not in dir_:
+		raise Exception("Check config file - vocabulary dir not given")
 	if 'output' not in dir_:
 		raise Exception("Check config file - output dir not given")
 	if 'model' not in dir_:
