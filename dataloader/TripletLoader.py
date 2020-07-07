@@ -54,6 +54,9 @@ class TripletLoader(data.Dataset):
 
         self.generate_triplets()
 
+        if self.__len__() == 0:
+            raise("ERROR! No triplets loaded!")
+
     def __getitem__(self, index):
         # TODO:
         print("HUi")
