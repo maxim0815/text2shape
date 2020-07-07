@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/maxim0815/text2shape.svg?branch=master)](https://travis-ci.org/maxim0815/text2shape)
+
 # text2shape
 
 Project is based on this [paper](https://arxiv.org/abs/1803.08495).

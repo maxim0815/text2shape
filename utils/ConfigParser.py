@@ -35,6 +35,8 @@ def config_parser(config_file, print_config=True):
 		raise Exception("Check config file - mom not given")
 	if 'wd' not in hp_:
 		raise Exception("Check config file - wd not given")
+	if 'ep' not in hp_:
+		raise Exception("Check config file - ep not given")
 
 	if 'data' not in dir_:
 		raise Exception("Check config file - data dir not given")

@@ -1,10 +1,10 @@
-name: "embeddings"
+name: "test-config"
 hyper_parameters:
   lr: 0.001
   bs: 64
   mom: 0.9
   wd: 0.0001
-  ep: 100
+  ep: 0
 directories:
   data: "data/"
   output: "output/"
