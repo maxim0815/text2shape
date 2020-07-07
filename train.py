@@ -18,6 +18,9 @@ def main(config):
     dataloader = TripletLoader(config)
 
     batch = dataloader.get_batch()
+
+    pos_desc = dataloader.txt_vectorization.vector2description(batch[0].pos_desc)
+    neg_desc = dataloader.txt_vectorization.vector2description(batch[0].neg_desc)
     
 
     stats = ["loss", "accuracy"]

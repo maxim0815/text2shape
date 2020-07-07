@@ -47,6 +47,7 @@ class TripletLoader(data.Dataset):
             sys.exit("ERROR! Triplet loader can't load given vocabulary")        
 
         self.triplet_list = []
+        self.lengt_voc = len(self.txt_vectorization.voc_list)
 
         # TODO: seed to config?
         np.random.seed(1200)
