@@ -1,0 +1,6 @@
+numpy
+wheel
+torch
+pynrrd
+PyYAML
+tensorboard
