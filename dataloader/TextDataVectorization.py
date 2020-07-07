@@ -40,13 +40,3 @@ class TxtVectorization(object):
         # remove last space
         description = description[:-1]
         return description
-
-
-#test = TxtVectorization("data/voc.csv")
-#pre = pd.read_csv("data/preprocessed.captions.csv").to_dict()
-#description = pre["description"][0]
-#
-#vector = test.description2vector(description)
-#
-#desc = test.vector2description(vector)
-#print("HUI")
