@@ -3,6 +3,8 @@ import argparse
 from utils.ConfigParser import config_parser
 from utils.TensorboardEvaluation import Evaluation
 
+from dataloader.TripletLoader import TripletLoader
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('config', type=str, help="dir to config file")
@@ -12,6 +14,14 @@ def parse_arguments():
 def main(config):
     hyper_parameters = config['hyper_parameters']
     dirs = config['directories']
+
+    dataloader = TripletLoader(config)
+
+    batch = dataloader.get_batch()
+
+    pos_desc = dataloader.txt_vectorization.vector2description(batch[0].pos_desc)
+    neg_desc = dataloader.txt_vectorization.vector2description(batch[0].neg_desc)
+    
 
     stats = ["loss", "accuracy"]
     tensorboard = Evaluation(dirs['tensorboard'], config['name'], stats, hyper_parameters)
