@@ -1,5 +1,8 @@
 import argparse
 
+import nrrd
+import torch
+
 from utils.ConfigParser import config_parser
 from utils.TensorboardEvaluation import Evaluation
 
@@ -7,6 +10,7 @@ from dataloader.TripletLoader import TripletLoader
 
 from dataloader.TextDataVectorization import TxtVectorization
 
+from models.Networks import ShapeEncoder
 from models.Networks import TextEncoder
 
 import torch
@@ -47,11 +51,23 @@ def main(config):
 
     output = txt_encoder(desc_batch)
 
+    print(txt_encoder)
+
     stats = ["loss", "accuracy"]
     tensorboard = Evaluation(
         dirs['tensorboard'], config['name'], stats, hyper_parameters)
 
     # TODO:
+    
+    image_dir = 'test/test_shapes/35bcb52fea44850bb97ad864945165a1/35bcb52fea44850bb97ad864945165a1.nrrd'
+    data, _ = nrrd.read(image_dir, index_order='C')
+    
+    #[bs, in_c, depth, height, width]
+
+    data = torch.randn(64, 4, 32, 32, 32) 
+    shape_encoder = ShapeEncoder()
+    output = shape_encoder(data)
+    print(shape_encoder)
 
 
 if __name__ == '__main__':
