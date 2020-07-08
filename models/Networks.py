@@ -31,6 +31,8 @@ class TextEncoder(nn.Module):
         self.fc2 = nn.Linear(128, 128)
 
     def forward(self, x):
+        des_length = self.compute_description_length(x)
+
         x = self.emb(x)         # [bs, seq, emb]
         x = x.transpose(1, 2)    # [bs, emb, seq]
 
@@ -45,17 +47,32 @@ class TextEncoder(nn.Module):
         x, hidden = self.gru(x)
         x = F.relu(x)
 
-        # TODO:
-        #       NO IDEA HOW TO PREPARE FOR OUTPUT(128,1)
-        #       ??????
+        x = self.extract_relevant(x, des_length)
 
-        # conv_seq_len x batch_size as batch_size for linear layer
-        seq_len = x.size(0)
-        bs = x.size(1)
-        x = x.view(seq_len * bs, 256)
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
 
-        x = x.view(seq_len, -1, 128)
-
         return x
+
+    def compute_description_length(self, batch):
+        """
+        batch:          [bs, seq]
+        des_length:     size of bs containing the length of
+                        each description in batch 
+        """
+        des_length = torch.gt(batch, 0).sum(dim=1).long()
+        return des_length
+
+    def extract_relevant(self, out, des_length):
+        #TODO: not quite sure what happens here 
+        # combination of orignal repo and
+        # https://github.com/eriche2016/text2shape.pytorch/blob/master/models/lba_models.py
+        
+        bs = out.shape[1]
+        max_length = out.shape[0]
+        out_size = int(out.shape[2])
+
+        masks = (des_length-1).unsqueeze(0).unsqueeze(2).expand(max_length, out.size(1), out.size(2))
+        relevant = out.gather(0, masks)[0]
+
+        return relevant

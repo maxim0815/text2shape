@@ -40,14 +40,12 @@ def main(config):
 
     txt_encoder = TextEncoder(dataloader.length_voc)
 
-    desc_tensor = torch.from_numpy(batch[0].pos_desc).long()
-    desc_tensor = desc_tensor.unsqueeze(0)              # simulates bs
-    #desc_tensor = torch.LongTensor(desc_tensor)
-    test = torch.randn(1, 4380) 
-    # swap axis into [bs, n_class, len]
-    #desc_tensor = desc_tensor.view(1, desc_tensor.shape[0], 100)
+    desc_batch = torch.zeros(2, 96).long()
 
-    output = txt_encoder(desc_tensor)
+    desc_batch[0] = torch.from_numpy(batch[0].pos_desc).long()
+    desc_batch[1] = torch.from_numpy(batch[1].pos_desc).long()
+
+    output = txt_encoder(desc_batch)
 
     stats = ["loss", "accuracy"]
     tensorboard = Evaluation(
