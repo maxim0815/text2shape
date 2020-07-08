@@ -59,7 +59,7 @@ def main(config):
 
     # TODO:
     
-    image_dir = 'data/nrrd_256_filter_div_32_solid/43321568c4bc0a7cbaf2e78ed413860a/43321568c4bc0a7cbaf2e78ed413860a.nrrd'
+    image_dir = 'test/test_shapes/35bcb52fea44850bb97ad864945165a1/35bcb52fea44850bb97ad864945165a1.nrrd'
     data, _ = nrrd.read(image_dir, index_order='C')
     
     #[bs, in_c, depth, height, width]
