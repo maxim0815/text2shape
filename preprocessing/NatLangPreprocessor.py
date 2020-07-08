@@ -59,7 +59,13 @@ class NatLangPreprocessor():
                 self.unique_tokens.update({token: 1})
 
     def save_vocabulary(self, dir_name):
+        '''
+        voc[0] = END
+        ...
+        voc[N] = UNK
+        '''
         vocabulary = []
+        vocabulary.append("END")
         for key in self.unique_tokens.keys():
             if self.unique_tokens[key] > 2:
                 vocabulary.append(key)

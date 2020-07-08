@@ -8,11 +8,12 @@ class TxtVectorization(object):
     uses vocabulary to tranform sentences to vector or vice versa
     '''
 
-    def __init__(self, voc_dir):
+    def __init__(self, voc_dir, max_desc_length=96):
         try:
             csv_voc = pd.read_csv(voc_dir).to_dict()
             voc_dict = csv_voc["vocabulary"]
             self.voc_list = []
+            self.max_desc_length = max_desc_length
             for key, value in voc_dict.items():
                 self.voc_list.append(value)
 
@@ -21,34 +22,21 @@ class TxtVectorization(object):
 
     def description2vector(self, description):
         words = description.split(" ")
-        vector = np.zeros((len(self.voc_list), 1))
-        for word in words:
-            # UNK
-            if word not in self.voc_list:
-                vector[-1] = 1
+        vector = np.zeros(self.max_desc_length, dtype=np.int32)
+        for i, word in enumerate(words):
+            if word in self.voc_list:
+                vector[i] = self.voc_list.index(word)
             else:
-                index = self.voc_list.index(word)
-                vector[index] = 1
+                vector[i] = self.voc_list.index("UNK")
         return vector
 
     def vector2description(self, vector):
         description = ""
         for i in range(len(vector)):
-            # UNK reached
-            if i == len(vector)-1:
+            word = self.voc_list[vector[i]]
+            if word == "END":
                 break
-            if vector[i] == 1:
-                description += self.voc_list[i] + " "
+            description += word + " "
         # remove last space
         description = description[:-1]
         return description
-
-
-#test = TxtVectorization("data/voc.csv")
-#pre = pd.read_csv("data/preprocessed.captions.csv").to_dict()
-#description = pre["description"][0]
-#
-#vector = test.description2vector(description)
-#
-#desc = test.vector2description(vector)
-#print("HUI")
