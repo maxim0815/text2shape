@@ -5,7 +5,7 @@ from datetime import datetime
 
 class Evaluation:
 
-    def __init__(self, store_dir, name, stats, hyper_parameters):
+    def __init__(self, store_dir, name, stats, hyper_parameters = 0):
         """
         Creates placeholders for the statistics listed in stats to generate tensorboard summaries.
         e.g. stats = ["loss"]
@@ -15,8 +15,8 @@ class Evaluation:
 
         self.stats = stats
 
-
-        self.tf_writer.add_hparams(hyper_parameters, {})
+        if hyper_parameters != 0:
+            self.tf_writer.add_hparams(hyper_parameters, {})
 
 
     def write_episode_data(self, episode, eval_dict):
