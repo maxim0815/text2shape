@@ -13,8 +13,6 @@ from dataloader.TextDataVectorization import TxtVectorization
 from models.Networks import ShapeEncoder
 from models.Networks import TextEncoder
 
-import torch
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser()
