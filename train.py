@@ -10,8 +10,7 @@ from dataloader.TripletLoader import TripletLoader
 
 from dataloader.TextDataVectorization import TxtVectorization
 
-from models.Networks import ShapeEncoder
-from models.Networks import TextEncoder
+from models.TripletEncoder import TripletEncoder
 
 
 def parse_arguments():
@@ -25,48 +24,57 @@ def main(config):
     hyper_parameters = config['hyper_parameters']
     dirs = config['directories']
 
-    vectorization = TxtVectorization(config['directories']['vocabulary'])
-
-    s = "the table is round and has 3 legs . the table is rotating ."
-    vec = vectorization.description2vector(s)
-    des = vectorization.vector2description(vec)
-
-    dataloader = TripletLoader(config)
-
-    batch = dataloader.get_batch()
-
-    pos_desc = dataloader.txt_vectorization.vector2description(
-        batch[0].pos_desc)
-    neg_desc = dataloader.txt_vectorization.vector2description(
-        batch[0].neg_desc)
-
-    txt_encoder = TextEncoder(dataloader.length_voc)
-
-    desc_batch = torch.zeros(2, 96).long()
-
-    desc_batch[0] = torch.from_numpy(batch[0].pos_desc).long()
-    desc_batch[1] = torch.from_numpy(batch[1].pos_desc).long()
-
-    output = txt_encoder(desc_batch)
-
-    print(txt_encoder)
-
     stats = ["loss", "accuracy"]
     tensorboard = Evaluation(
         dirs['tensorboard'], config['name'], stats, hyper_parameters)
+    tensorboard_eval = Evaluation(
+        dirs['tensorboard'], config['name']+"_eval", stats)
 
-    # TODO:
-    
-    image_dir = 'test/test_shapes/35bcb52fea44850bb97ad864945165a1/35bcb52fea44850bb97ad864945165a1.nrrd'
-    data, _ = nrrd.read(image_dir, index_order='C')
-    
-    #[bs, in_c, depth, height, width]
+    dataloader = TripletLoader(config)
 
-    data = torch.randn(64, 4, 32, 32, 32) 
-    shape_encoder = ShapeEncoder()
-    output = shape_encoder(data)
-    print(shape_encoder)
+    trip_enc = TripletEncoder(config, dataloader.length_voc)
 
+    epochs = config['hyper_parameters']['ep']
+
+    print("...starting training")
+
+    episode = 0
+    best_eval_loss = float('inf') 
+    best_eval_acc = 0.0
+
+    for ep in range(epochs):
+        print("...starting with epoch {} of {}".format(ep, epochs))
+        bs = config['hyper_parameters']['bs']
+        length = dataloader.get_length("train")
+        number_of_batches = int(dataloader.get_length(
+            "train")/config['hyper_parameters']['bs'])
+        for i in range(number_of_batches):
+            print('Input {} of {} '.format(i, number_of_batches), end='\r')
+
+            batch = dataloader.get_batch("train")
+            eval_dict = trip_enc.update(batch)
+
+            #if episode % 10 == 0:
+            tensorboard.write_episode_data(episode, eval_dict)
+
+            if episode % 10 == 0:
+                # run evaluation on one batch
+                batch_eval = dataloader.get_batch("test")
+                eval_dict = trip_enc.predict(batch_eval)
+
+                tensorboard_eval.write_episode_data(episode, eval_dict)
+
+                # run for loss
+                # TODO: update maybe to accuracy?
+
+                if eval_dict["loss"] < best_eval_loss:
+                    best_eval_loss = eval_dict["loss"]
+                    print(
+                        "...new best eval Loss {} --> saving models".format(best_eval_loss))
+                    trip_enc.save_models()
+
+            episode += 1
+    print("FINISHED")
 
 if __name__ == '__main__':
     args = parse_arguments()

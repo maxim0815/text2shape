@@ -2,6 +2,7 @@ import torch.utils.data as data
 import nrrd
 import pandas as pd
 import numpy as np
+import random
 
 import sys
 import os
@@ -47,6 +48,8 @@ class TripletLoader(data.Dataset):
             sys.exit("ERROR! Triplet loader can't load given vocabulary")        
 
         self.triplet_list = []
+        self.triplet_train = []
+        self.triplet_test = []
         self.length_voc = len(self.txt_vectorization.voc_list)
 
         # TODO: seed to config?
@@ -56,6 +59,8 @@ class TripletLoader(data.Dataset):
 
         if self.__len__() == 0:
             raise("ERROR! No triplets loaded!")
+        
+        self.split_train_test()
 
     def __getitem__(self, index):
         # TODO:
@@ -63,6 +68,12 @@ class TripletLoader(data.Dataset):
 
     def __len__(self):
         return len(self.triplet_list)
+    
+    def get_length(self, mode):
+        if mode == "train":
+            return len(self.triplet_train)
+        if mode == "test":
+            return len(self.triplet_test)
 
     def generate_triplets(self):
         for i in range(len(self.shapes["modelId"])):
@@ -98,11 +109,24 @@ class TripletLoader(data.Dataset):
             rand = np.random.randint(0, max_val)
         return rand
 
-    def get_batch(self):
+    def split_train_test(self):
+        '''
+        split 80/20 pareto ratio
+        '''
+        random.shuffle(self.triplet_list)
+        end_train = int(self.__len__()*0.8)
+        self.triplet_train = self.triplet_list[:end_train]
+        self.triplet_test = self.triplet_list[end_train:]
+
+    def get_batch(self, mode):
         batch = []
         for i in range(self.bs):
-            rand = np.random.randint(0, self.__len__())
-            batch.append(self.triplet_list[rand])
+            if mode == "train":
+                rand = np.random.randint(0, len(self.triplet_train))
+                batch.append(self.triplet_train[rand])
+            if mode == "test":
+                rand = np.random.randint(0, len(self.triplet_test))
+                batch.append(self.triplet_test[rand])
         return batch
 
 

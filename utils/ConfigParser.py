@@ -44,10 +44,12 @@ def config_parser(config_file, print_config=True):
 		raise Exception("Check config file - train_labels dir not given")
 	if 'vocabulary' not in dir_:
 		raise Exception("Check config file - vocabulary dir not given")
-	if 'output' not in dir_:
-		raise Exception("Check config file - output dir not given")
-	if 'model' not in dir_:
-		raise Exception("Check config file - model dir not given")
+	if 'text_model_load' not in dir_:
+		raise Exception("Check config file - text_model_load dir not given")
+	if 'shape_model_load' not in dir_:
+		raise Exception("Check config file - shape_model_load dir not given")
+	if 'model_save' not in dir_:
+		raise Exception("Check config file - model_save dir not given")
 	if 'tensorboard' not in dir_:
 		raise Exception("Check config file - tensorboard dir not given")
 
