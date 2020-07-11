@@ -1,0 +1,13 @@
+name: "retrieval"
+version: "t2t"
+hyper_parameters:
+  k: 3  # k nearest neighbor
+  n: 3  # n number of random data of which to find nearest neighbor
+  bs: 1 # to receive a random triplet
+directories:
+  train_data: "data/few_shapes/"
+  train_labels: "data/captions.tablechair.csv"
+  vocabulary: "data/full_voc.csv"
+  text_model_load: "results/text_encoder.pt"
+  shape_model_load: "output/"
+  output: "results/"

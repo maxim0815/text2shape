@@ -127,6 +127,9 @@ class TripletLoader(data.Dataset):
             if mode == "test":
                 rand = np.random.randint(0, len(self.triplet_test))
                 batch.append(self.triplet_test[rand])
+            if mode == "all":
+                rand = np.random.randint(0, len(self.triplet_list))
+                batch.append(self.triplet_list[rand])
         return batch
 
 
