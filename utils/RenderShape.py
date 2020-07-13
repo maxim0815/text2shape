@@ -5,11 +5,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class RenderImage():
-    def __init__(self, image_dir):
-        self.img_name = image_dir[image_dir.rfind("/")+1:image_dir.rfind(".")]
-        self.data, _ = nrrd.read(image_dir, index_order='C')
+    def __init__(self, image_dir=0):
+        if image_dir != 0:
+            self.img_name = image_dir[image_dir.rfind("/")+1:image_dir.rfind(".")]
+            self.data, _ = nrrd.read(image_dir, index_order='C')            
         self.colors = []
         self.edge_colors = []
+
+    def set_shape(self, shape):
+        self.data = shape
+    
+    def set_name(self, name):
+        self.img_name = name
 
     def _generate_colors(self, row):
         if row[3] >0:
@@ -26,12 +33,18 @@ class RenderImage():
         data_crop = self.data[:,:,:,0]
         colors_reshape = np.reshape(self.colors, data_crop.shape)
         edges_reshape = np.reshape(self.edge_colors, data_crop.shape)
-        ax.voxels(data_crop, facecolors=colors_reshape, edgecolors=edges_reshape)
+        # TODO: marked as issue
+        try:
+            ax.voxels(data_crop, facecolors=colors_reshape, edgecolors=edges_reshape)
+        except Exception as e:
+            print(e)
+            pass
         # save file
         if not os.path.exists(datadir):
             os.makedirs(datadir)
         save_dir = os.path.join(datadir, self.img_name+".png")
         plt.savefig(save_dir)
+        plt.close()
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 name: "retrieval"
-version: "t2t"
+version: ["s2s"] #["txt", "t2s"]
 hyper_parameters:
   k: 3  # k nearest neighbor
   n: 3  # n number of random data of which to find nearest neighbor
@@ -9,5 +9,5 @@ directories:
   train_labels: "data/captions.tablechair.csv"
   vocabulary: "data/full_voc.csv"
   text_model_load: "results/text_encoder.pt"
-  shape_model_load: "output/"
+  shape_model_load: "results/shape_encoder.pt"
   output: "results/"

@@ -49,3 +49,16 @@ python3 preprocessing/run_preprocessing.py data/captions.tablechair.csv data/ful
 ```
 python3 train.py config/cfg.yaml
 ```
+
+
+### Retrievals
+
+* define which retrievals and further configs within config/cfg_retrieval.yaml
+* possibile retrievals:
+  * text 2 text
+  * text 2 shape
+  * shape 2 shape
+
+```
+python3 retrieval.py config/cfg_retrieval.yaml
+```
