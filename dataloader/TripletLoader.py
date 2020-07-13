@@ -26,7 +26,7 @@ class TripletLoader(data.Dataset):
     random batch gets generated from self.triplets
     '''
 
-    def __init__(self, config):
+    def __init__(self, config, generate_triplets = True, split_data = True):
         self.bs = config['hyper_parameters']['bs']
 
         try:
@@ -47,20 +47,23 @@ class TripletLoader(data.Dataset):
         except:
             sys.exit("ERROR! Triplet loader can't load given vocabulary")        
 
-        self.triplet_list = []
-        self.triplet_train = []
-        self.triplet_test = []
         self.length_voc = len(self.txt_vectorization.voc_list)
 
         # TODO: seed to config?
         np.random.seed(1200)
 
-        self.generate_triplets()
+        self.triplet_list = []
+        self.triplet_train = []
+        self.triplet_test = []
 
-        if self.__len__() == 0:
-            raise("ERROR! No triplets loaded!")
+        if generate_triplets == True:
+            self.generate_triplets()
+            if self.__len__() == 0:
+                raise("ERROR! No triplets loaded!")
         
-        self.split_train_test()
+        if generate_triplets == True and split_data == True:
+            self.split_train_test()
+            self.contains_splited_data = True
 
     def __getitem__(self, index):
         # TODO:
@@ -122,14 +125,17 @@ class TripletLoader(data.Dataset):
         batch = []
         for i in range(self.bs):
             if mode == "train":
-                rand = np.random.randint(0, len(self.triplet_train))
-                batch.append(self.triplet_train[rand])
+                if len(self.triplet_train) > 0:
+                    rand = np.random.randint(0, len(self.triplet_train))
+                    batch.append(self.triplet_train[rand])
             if mode == "test":
-                rand = np.random.randint(0, len(self.triplet_test))
-                batch.append(self.triplet_test[rand])
+                if len(self.triplet_test) > 0:
+                    rand = np.random.randint(0, len(self.triplet_test))
+                    batch.append(self.triplet_test[rand])
             if mode == "all":
-                rand = np.random.randint(0, len(self.triplet_list))
-                batch.append(self.triplet_list[rand])
+                if len(self.triplet_list) > 0:
+                    rand = np.random.randint(0, len(self.triplet_list))
+                    batch.append(self.triplet_list[rand])
         return batch
 
 

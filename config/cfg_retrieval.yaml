@@ -5,8 +5,8 @@ hyper_parameters:
   n: 3  # n number of random data of which to find nearest neighbor
   bs: 1 # to receive a random triplet
 directories:
-  train_data: "data/few_shapes/"
-  train_labels: "data/captions.tablechair.csv"
+  train_data: "data/nrrd_256_filter_div_32_solid/"
+  train_labels: "data/full_preprocessed.captions.csv"
   vocabulary: "data/full_voc.csv"
   text_model_load: "results/text_encoder.pt"
   shape_model_load: "results/shape_encoder.pt"

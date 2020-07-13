@@ -95,6 +95,8 @@ def main(config):
             # generate tensor list of all shapes
             # do not use triplet_list!
             # triplet list contrains some shapes multiple times with different desc.
+            # TODO:
+            # GENERATING NEW LIST OF TENSORS IS VERY COSTLY IN RAM
             data_list = []
             for shape in dataloader.shapes["data"]:
                 tensor = torch.from_numpy(shape).float().to(device)
