@@ -4,6 +4,8 @@ import sys
 
 from models.Networks import ShapeEncoder, TextEncoder
 
+from utils.Losses import triplet_loss
+
 
 class TripletEncoder(object):
     def __init__(self, config, voc_size):
@@ -50,12 +52,20 @@ class TripletEncoder(object):
         shape_out = self.shape_encoder(shape_batch)
 
         # calculate triplet loss
-        eval_dict = {"loss": 1, "accuracy": 0.9}
+
+        loss, dist_pos, dist_neg = triplet_loss(shape_out, pos_out, neg_out)
+
+        #accuray
+        pred = (dist_pos - dist_neg).cpu().data
+        acc = (pred > 0).sum()*1.0/dist_pos.size()[0] 
+
+        eval_dict = {"loss" : loss.item(), "accuracy" : acc}
 
         self.optimizer_shape.zero_grad()
         self.optimizer_text.zero_grad()
 
         # backprop
+        loss.backward()
 
         self.optimizer_shape.step()
         self.optimizer_text.step()
@@ -75,7 +85,12 @@ class TripletEncoder(object):
         shape_out = self.shape_encoder(shape_batch)
 
         # calculate triplet loss
-        eval_dict = {"loss": 1, "accuracy": 0.9}
+        loss, dist_pos, dist_neg = triplet_loss(shape_out, pos_out, neg_out)
+
+        pred = (dist_pos - dist_neg).cpu().data
+        acc = (pred > 0).sum()*1.0/dist_pos.size()[0] 
+
+        eval_dict = {"loss" : loss.item(), "accuracy" : acc}
 
         return eval_dict
 

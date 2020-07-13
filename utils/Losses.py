@@ -1,6 +1,6 @@
 import torch
 
-def TripletLoss(a, p, n):
+def triplet_loss(a, p, n):
 
     """
     :param batch: type = list, batch of random triplets
