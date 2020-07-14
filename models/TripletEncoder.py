@@ -133,6 +133,6 @@ class TripletEncoder(object):
 
         shape_batch = shape_batch.to(self.device)
         pos_desc_batch = pos_desc_batch.to(self.device)
-        neg_dess_batch = neg_desc_batch.to(self.device)
+        neg_desc_batch = neg_desc_batch.to(self.device)
 
         return shape_batch, pos_desc_batch, neg_desc_batch
