@@ -20,8 +20,15 @@ class RenderImage():
 
     def _generate_colors(self, row):
         if row[3] >0:
-            self.colors.append('#{:x}{:x}{:x}{:x}'.format(row[0], row[1], row[2], row[3]))
-            self.edge_colors.append('#{:x}{:x}{:x}'.format(row[0], row[1], row[2]))
+            rgba = [None]*4
+            for i, channel in enumerate(row):
+                if channel < 16:
+                    rgba[i] = '0{:x}'.format(channel)
+                else:
+                    rgba[i] = '{:x}'.format(channel)
+
+            self.colors.append('#'+rgba[0]+rgba[1]+rgba[2]+rgba[3])
+            self.edge_colors.append('#'+rgba[0]+rgba[1]+rgba[2])
         else:
             self.colors.append('')
             self.edge_colors.append('')
@@ -33,12 +40,7 @@ class RenderImage():
         data_crop = self.data[:,:,:,0]
         colors_reshape = np.reshape(self.colors, data_crop.shape)
         edges_reshape = np.reshape(self.edge_colors, data_crop.shape)
-        # TODO: marked as issue
-        try:
-            ax.voxels(data_crop, facecolors=colors_reshape, edgecolors=edges_reshape)
-        except Exception as e:
-            print(e)
-            pass
+        ax.voxels(data_crop, facecolors=colors_reshape, edgecolors=edges_reshape)
         # save file
         if not os.path.exists(datadir):
             os.makedirs(datadir)
@@ -48,6 +50,6 @@ class RenderImage():
 
 
 if __name__ == '__main__':
-    img = RenderImage('nrrd_256_filter_div_32_solid/43321568c4bc0a7cbaf2e78ed413860a/43321568c4bc0a7cbaf2e78ed413860a.nrrd')
+    img = RenderImage('data/nrrd_256_filter_div_32_solid/2b7335c083d04862ca9c7c1ff5a28926/2b7335c083d04862ca9c7c1ff5a28926.nrrd')
     img.render_voxels()
 
