@@ -22,7 +22,7 @@ def find_nn(model, input_, data_list, k):
     output_q = model(input_)
     loss_L2 = np.array([])
     for i, data in enumerate(data_list):
-        print(i, end='\r')
+        print("Calculate L2 loss for {} of {}".format(i, len(data_list)), end='\r')
         output = model(data)
         loss_L2 = np.append(loss_L2, criterion(output_q, output).item())
     

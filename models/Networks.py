@@ -103,9 +103,6 @@ class TextEncoder(nn.Module):
         max_length = 96
         out_size = int(out.shape[2])
 
-        # -2 for staying within
-        if des_length > 88:
-            print("HUi")
         masks = (des_length-1).unsqueeze(0).unsqueeze(2).expand(max_length, out.size(1), out.size(2))
         relevant = out.gather(0, masks)[0]
 
