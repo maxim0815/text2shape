@@ -10,4 +10,4 @@ directories:
   vocabulary: "data/full_voc.csv"
   text_model_load: "local_results/01_loss_0.2416/text_encoder.pt"
   shape_model_load: "local_results/01_loss_0.2416/shape_encoder.pt"
-  output: "local_results/01_loss_0.2416/"
+  output: "local_results/test/"

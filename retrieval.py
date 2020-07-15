@@ -2,10 +2,11 @@ import torch
 import argparse
 import yaml
 import os
+import numpy as np
 
 from utils.ConfigParser import retrieval_config_parser
 from models.Networks import TextEncoder, ShapeEncoder
-from dataloader.TripletLoader import TripletLoader
+from dataloader.TripletLoader import RetrievalLoader
 from utils.NearestNeighbor import find_nn
 from utils.RenderShape import RenderImage
 
@@ -22,7 +23,7 @@ def main(config):
     load_directory.append(config['directories']['shape_model_load'])
     load_directory.append(config['directories']['text_model_load'])
 
-    dataloader = TripletLoader(config)
+    dataloader = RetrievalLoader(config)
 
     k = config["hyper_parameters"]["k"]
 
@@ -39,22 +40,13 @@ def main(config):
             text_encoder = text_encoder.to(device)
             text_encoder.load_state_dict(temp_net)
 
-            # generate tensor list of all descriptions within triplets
-            data_list = []
-            for triplet in dataloader.triplet_list:
-                tensor = torch.from_numpy(triplet.pos_desc).long().to(device)
-                tensor = tensor.unsqueeze(0)
-                data_list.append(tensor)
-
             for n in range(config["hyper_parameters"]["n"]):
                 # this is the description for which the nearest neighbors are searched
-                rand_triplet = dataloader.get_batch("all")[0]
-                desc = torch.from_numpy(rand_triplet.pos_desc).long()
-                desc = desc.unsqueeze(0)        # fake bs of one for network
-                desc = desc.to(device)
+                rand = np.random.randint(0, len(dataloader.descriptions_t))
+                rand_desc = dataloader.descriptions_t[rand]
 
                 closest_idx, closest_dist = find_nn(
-                    text_encoder, desc, data_list, k)
+                    text_encoder, rand_desc, dataloader.descriptions_t, k)
 
                 desc = desc.numpy()
                 desc = desc.reshape(96)
@@ -63,7 +55,7 @@ def main(config):
                 nearest_descriptions = []
 
                 for idx in closest_idx:
-                    d = data_list[idx]
+                    d = dataloader.descriptions_t[idx]
                     d = d.numpy().reshape(96)
                     nearest_descriptions.append(
                         dataloader.txt_vectorization.vector2description(d))
@@ -92,41 +84,32 @@ def main(config):
             shape_encoder = shape_encoder.to(device)
             shape_encoder.load_state_dict(temp_net)
 
-            # generate tensor list of all shapes
-            # do not use triplet_list!
-            # triplet list contrains some shapes multiple times with different desc.
-            # TODO:
+           # TODO:
             # GENERATING NEW LIST OF TENSORS IS VERY COSTLY IN RAM
-            data_list = []
-            for shape in dataloader.shapes["data"]:
-                tensor = torch.from_numpy(shape).float().to(device)
-                tensor = tensor.unsqueeze(0)
-                data_list.append(tensor)
+
 
             for n in range(config["hyper_parameters"]["n"]):
                 # this is the shape for which the nearest neighbors are searched
-                rand_triplet = dataloader.get_batch("all")[0]
-                shape = torch.from_numpy(rand_triplet.shape).float()
-                shape = shape.unsqueeze(0)        # fake bs of one for network
-                shape = shape.to(device)
+                rand = np.random.randint(0, len(dataloader.shapes_t))
+                rand_shape = dataloader.shapes_t[rand]
 
                 closest_idx, closest_dist = find_nn(
-                    shape_encoder, shape, data_list, k)
+                    shape_encoder, rand_shape, dataloader.shapes_t, k)
 
                 save_directory = config["directories"]["output"]
                 name = "shape2shape" + str(n) + str("/")
                 file_dir = os.path.join(save_directory, name)
 
                 # save png of selected shape
-                shape = shape.int()
-                shape = shape.numpy().reshape(32, 32, 32, 4)
+                rand_shape = rand_shape.int()
+                rand_shape = rand_shape.numpy().reshape(32, 32, 32, 4)
                 render = RenderImage()
-                render.set_shape(shape)
+                render.set_shape(rand_shape)
                 render.set_name("selected")
                 render.render_voxels(file_dir)
 
                 for idx in closest_idx:
-                    n_shape = data_list[idx]
+                    n_shape = dataloader.shapes_t[idx]
                     n_shape = n_shape.int()
                     n_shape = n_shape.numpy().reshape(32, 32, 32 ,4)
                     render = RenderImage()

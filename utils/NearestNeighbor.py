@@ -23,6 +23,8 @@ def find_nn(model, input_, data_list, k):
     loss_L2 = np.array([])
     for i, data in enumerate(data_list):
         print("Calculate L2 loss for {} of {}".format(i, len(data_list)), end='\r')
+        if torch.cuda.is_available():
+            data = data.to('cuda')
         output = model(data)
         loss_L2 = np.append(loss_L2, criterion(output_q, output).item())
     

@@ -1,4 +1,4 @@
-import torch.utils.data as data
+import torch
 import nrrd
 import pandas as pd
 import numpy as np
@@ -15,8 +15,37 @@ class Triplet(object):
         self.pos_desc = pos_desc
         self.neg_desc = neg_desc
 
+class Loader(object):
+    '''
+    Basic loader class
+        tries to load given files
+        handles exceptions
+    '''
+    def __init__(self, config):
+        self.bs = config['hyper_parameters']['bs']
 
-class TripletLoader(data.Dataset):
+        try:
+            self.descriptions = pd.read_csv(
+                config['directories']['train_labels']).to_dict()
+        except:
+            sys.exit("ERROR! Loader can't load given labels")
+
+        try:
+            self.shapes = parse_directory_for_nrrd(
+                config['directories']['train_data'])
+            #self.train_data, _ = nrrd.read(config['directories']['train_data'], index_order = 'C')
+        except:
+            sys.exit("ERROR! Loader can't load given data")
+
+        try:
+            self.txt_vectorization = TxtVectorization(config['directories']['vocabulary'])
+        except:
+            sys.exit("ERROR! Loader can't load given vocabulary")        
+
+        self.length_voc = len(self.txt_vectorization.voc_list)
+
+
+class TripletLoader(Loader):
     '''
     loads all data and generates triplets:
         Anchor shape
@@ -26,28 +55,8 @@ class TripletLoader(data.Dataset):
     random batch gets generated from self.triplets
     '''
 
-    def __init__(self, config, generate_triplets = True, split_data = True):
-        self.bs = config['hyper_parameters']['bs']
-
-        try:
-            self.descriptions = pd.read_csv(
-                config['directories']['train_labels']).to_dict()
-        except:
-            sys.exit("ERROR! Triplet loader can't load given labels")
-
-        try:
-            self.shapes = parse_directory_for_nrrd(
-                config['directories']['train_data'])
-            #self.train_data, _ = nrrd.read(config['directories']['train_data'], index_order = 'C')
-        except:
-            sys.exit("ERROR! Triplet loader can't load given data")
-
-        try:
-            self.txt_vectorization = TxtVectorization(config['directories']['vocabulary'])
-        except:
-            sys.exit("ERROR! Triplet loader can't load given vocabulary")        
-
-        self.length_voc = len(self.txt_vectorization.voc_list)
+    def __init__(self, config):
+        super().__init__(config)
 
         # TODO: seed to config?
         np.random.seed(1200)
@@ -56,14 +65,11 @@ class TripletLoader(data.Dataset):
         self.triplet_train = []
         self.triplet_test = []
 
-        if generate_triplets == True:
-            self.generate_triplets()
-            if self.__len__() == 0:
-                raise("ERROR! No triplets loaded!")
-        
-        if generate_triplets == True and split_data == True:
-            self.split_train_test()
-            self.contains_splited_data = True
+        self.generate_triplets()
+        if self.__len__() == 0:
+            raise("ERROR! No triplets loaded!")
+
+        self.split_train_test()
 
     def __getitem__(self, index):
         # TODO:
@@ -153,3 +159,40 @@ def parse_directory_for_nrrd(path):
                 shapes['data'].append(train_data)
 
     return shapes
+
+
+class RetrievalLoader(Loader):
+    def __init__(self, config):
+        super().__init__(config)
+
+        self.shapes_t = []
+        self.descriptions_t = []
+
+        # store all shapes as tensor in list
+        for i in range(len(self.shapes["modelId"])):
+            tensor = torch.from_numpy(self.shapes["data"][i]).float()
+            tensor = tensor.unsqueeze(0)    #to fake bs=1 for network
+            self.shapes_t.append(tensor)
+            print('Generating shape tensor list {:.2f} %'.format(
+                i/len(self.shapes["modelId"])*100), end='\r')
+        print()
+        print("Shape tensor list --> Done")
+        
+        # free memory
+        del self.shapes
+
+        # store all descriptions as tensor in list
+        for i in range(len(self.descriptions["modelId"])):
+            desc = self.descriptions["description"][i]
+            desc = self.txt_vectorization.description2vector(desc)
+            tensor = torch.from_numpy(desc).long()
+            tensor = tensor.unsqueeze(0)    #to fake bs=1 for network
+            self.descriptions_t.append(tensor)
+            print('Generating description tensor list {:.2f} %'.format(
+                i/len(self.descriptions["modelId"])*100), end='\r')
+        print()
+        print("Description tensor list --> Done")
+
+        # free memory
+        del self.descriptions
+
