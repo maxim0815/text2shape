@@ -64,7 +64,7 @@ def main(config):
                 rand_desc = rand_desc.cpu()
                 rand_desc = rand_desc.numpy()
                 rand_desc = rand_desc.reshape(96)
-                derand_descsc = dataloader.txt_vectorization.vector2description(rand_desc)
+                rand_desc = dataloader.txt_vectorization.vector2description(rand_desc)
 
                 nearest_descriptions = []
 
