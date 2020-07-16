@@ -13,6 +13,8 @@ from dataloader.TextDataVectorization import TxtVectorization
 from models.TripletEncoder import TripletEncoder
 
 
+
+
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('config', type=str, help="dir to config file")
