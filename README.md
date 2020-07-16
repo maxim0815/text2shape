@@ -55,9 +55,10 @@ python3 train.py config/cfg.yaml
 
 * define which retrievals and further configs within config/cfg_retrieval.yaml
 * possibile retrievals:
-  * text 2 text
-  * text 2 shape
-  * shape 2 shape
+  * text 2 text   (t2t)
+  * text 2 shape  (t2s)
+  * shape 2 text  (s2t)
+  * shape 2 shape (s2s)
 
 ```
 python3 retrieval.py config/cfg_retrieval.yaml

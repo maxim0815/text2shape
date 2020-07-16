@@ -176,7 +176,6 @@ class RetrievalLoader(Loader):
             print('Generating shape tensor list {:.2f} %'.format(
                 i/len(self.shapes["modelId"])*100), end='\r')
         print()
-        print("Shape tensor list --> Done")
         
         # free memory
         del self.shapes
@@ -191,7 +190,6 @@ class RetrievalLoader(Loader):
             print('Generating description tensor list {:.2f} %'.format(
                 i/len(self.descriptions["modelId"])*100), end='\r')
         print()
-        print("Description tensor list --> Done")
 
         # free memory
         del self.descriptions
