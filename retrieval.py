@@ -60,19 +60,21 @@ def main(config):
                 closest_idx, closest_dist = find_nn(
                     text_encoder, rand_desc, dataloader.descriptions_t, k)
 
-                desc = desc.numpy()
-                desc = desc.reshape(96)
-                desc = dataloader.txt_vectorization.vector2description(desc)
+                
+                rand_desc = rand_desc.cpu()
+                rand_desc = rand_desc.numpy()
+                rand_desc = rand_desc.reshape(96)
+                derand_descsc = dataloader.txt_vectorization.vector2description(rand_desc)
 
                 nearest_descriptions = []
 
                 for idx in closest_idx:
-                    d = dataloader.descriptions_t[idx]
+                    d = dataloader.descriptions_t[idx].cpu()
                     d = d.numpy().reshape(96)
                     nearest_descriptions.append(
                         dataloader.txt_vectorization.vector2description(d))
 
-                dict_ = {desc: nearest_descriptions}
+                dict_ = {rand_desc: nearest_descriptions}
 
                 save_directory = config["directories"]["output"]
                 name = "t2t_nearest_neighbor_" + str(n) + ".yaml"
@@ -119,6 +121,7 @@ def main(config):
                     os.makedirs(save_directory)
 
                 # write description into yaml
+                rand_desc = rand_desc.cpu()
                 rand_desc = rand_desc.numpy()
                 rand_desc = rand_desc.reshape(96)
                 rand_desc = dataloader.txt_vectorization.vector2description(rand_desc)
@@ -129,7 +132,7 @@ def main(config):
                     yaml.dump(dict_, outfile, default_flow_style=False)
                 
                 for idx in closest_idx:
-                    n_shape = dataloader.shapes_t[idx]
+                    n_shape = dataloader.shapes_t[idx].cpu()
                     n_shape = n_shape.int()
                     n_shape = n_shape.numpy().reshape(32, 32, 32, 4)
                     render = RenderImage()
@@ -164,7 +167,7 @@ def main(config):
                     os.makedirs(save_directory)
 
                 # save png of selected shape
-                rand_shape = rand_shape.int()
+                rand_shape = rand_shape.int().cpu()
                 rand_shape = rand_shape.numpy().reshape(32, 32, 32, 4)
                 render = RenderImage()
                 render.set_shape(rand_shape)
@@ -172,7 +175,7 @@ def main(config):
                 render.render_voxels(save_directory)
 
                 for idx in closest_idx:
-                    n_shape = dataloader.shapes_t[idx]
+                    n_shape = dataloader.shapes_t[idx].cpu()
                     n_shape = n_shape.int()
                     n_shape = n_shape.numpy().reshape(32, 32, 32, 4)
                     render = RenderImage()
@@ -215,7 +218,7 @@ def main(config):
                     os.makedirs(save_directory)
 
                 # save png of selected shape
-                rand_shape = rand_shape.int()
+                rand_shape = rand_shape.int().cpu()
                 rand_shape = rand_shape.numpy().reshape(32, 32, 32, 4)
                 render = RenderImage()
                 render.set_shape(rand_shape)
@@ -225,7 +228,7 @@ def main(config):
                 nearest_descriptions = []
 
                 for idx in closest_idx:
-                    d = dataloader.descriptions_t[idx]
+                    d = dataloader.descriptions_t[idx].cpu()
                     d = d.numpy().reshape(96)
                     nearest_descriptions.append(
                         dataloader.txt_vectorization.vector2description(d))
