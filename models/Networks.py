@@ -50,11 +50,11 @@ class TextEncoder(nn.Module):
         """
         self.emb = nn.Embedding(vocabulary_size, 128)
         # define layers of a convolutional neural network
-        self.conv1 = nn.Conv1d(128, 128, kernel_size=3, stride=1)
-        self.conv2 = nn.Sequential(nn.Conv1d(128, 128, 3, stride=1),
+        self.conv1 = nn.Conv1d(128, 128, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Sequential(nn.Conv1d(128, 128, 3, stride=1, padding=1),
                                    nn.BatchNorm1d(128),)
-        self.conv3 = nn.Conv1d(128, 256, 3, stride=1)
-        self.conv4 = nn.Sequential(nn.Conv1d(256, 256, 3, stride=1),
+        self.conv3 = nn.Conv1d(128, 256, 3, stride=1, padding=1)
+        self.conv4 = nn.Sequential(nn.Conv1d(256, 256, 3, stride=1, padding=1),
                                    nn.BatchNorm1d(256))
         self.gru = nn.GRU(input_size=256, hidden_size=256)
 
@@ -75,7 +75,7 @@ class TextEncoder(nn.Module):
         # [bs, emb, seq] to [seq, bs , emb) for GRU
         x = x.transpose(1, 2)
         x = x.transpose(0, 1)
-        x, hidden = self.gru(x)
+        x, hidden = self.gru(x, None)
         x = F.relu(x)
 
         x = self.extract_relevant(x, des_length)
@@ -103,7 +103,7 @@ class TextEncoder(nn.Module):
         max_length = out.shape[0]
         out_size = int(out.shape[2])
 
-        masks = (des_length-1).unsqueeze(0).unsqueeze(2).expand(max_length, out.size(1), out.size(2))
+        masks = (des_length-1).unsqueeze(0).unsqueeze(2).expand(max_length, bs, out_size)
         relevant = out.gather(0, masks)[0]
 
         return relevant

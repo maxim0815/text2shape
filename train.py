@@ -6,7 +6,8 @@ import torch
 from utils.ConfigParser import config_parser
 from utils.TensorboardEvaluation import Evaluation
 
-from dataloader.TripletLoader import TripletLoader
+from dataloader.DataLoader import TripletLoader
+
 from dataloader.TextDataVectorization import TxtVectorization
 
 from models.TripletEncoder import TripletEncoder
