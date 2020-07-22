@@ -1,5 +1,5 @@
 name: "retrieval"
-version: ["s2t"]
+version: ["t2t", "t2s", "s2s", "s2t"]
 hyper_parameters:
   k: 8  # k nearest neighbor
   n: 3  # n number of random data of which to find nearest neighbor

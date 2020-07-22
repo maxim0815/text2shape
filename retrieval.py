@@ -47,6 +47,7 @@ def main(config):
     for version in retrieval_versions:
         # text 2 text retrieval
         if version == "t2t":
+            print(80 * '_')
             print("Running t2t retrieval ...")
             text_encoder = TextEncoder(dataloader.length_voc)
             temp_net = torch.load(load_directory[1], map_location=device)
@@ -91,6 +92,7 @@ def main(config):
 
         # text 2 shape retrieval
         if version == "t2s":
+            print(80 * '_')
             print("Running t2s retrieval ...")
             shape_encoder = ShapeEncoder()
             temp_net = torch.load(load_directory[0], map_location=device)
@@ -144,6 +146,7 @@ def main(config):
 
         # shape 2 shape retrieval
         if version == "s2s":
+            print(80 * '_')
             print("Running s2s retrieval ...")
             shape_encoder = ShapeEncoder()
             temp_net = torch.load(load_directory[0], map_location=device)
@@ -186,6 +189,7 @@ def main(config):
 
         # shape 2 text retrieval
         if version == "s2t":
+            print(80 * '_')
             print("Running s2t retrieval ...")
             shape_encoder = ShapeEncoder()
             temp_net = torch.load(load_directory[0], map_location=device)
