@@ -44,6 +44,23 @@ class Loader(object):
 
         self.length_voc = len(self.txt_vectorization.voc_list)
 
+    def get_shape_length(self):
+        return len(self.shapes["modelId"])
+
+    def get_description_length(self):
+        return len(self.descriptions["modelId"])
+
+    def get_shape(self, id):
+        shape = self.shapes["data"][id]
+        shape = np.expand_dims(shape, axis=0)           # bs = 1
+        return shape
+
+    def get_description(self, id):
+        desc = self.descriptions["description"][id]
+        desc = self.txt_vectorization.description2vector(desc)
+        desc = np.expand_dims(desc, axis=0)             # bs = 1
+        return desc
+
 
 class TripletLoader(Loader):
     '''
@@ -167,7 +184,13 @@ class RetrievalLoader(Loader):
 
         self.shapes_t = []
         self.descriptions_t = []
+        #self.generate_tensor_list()
 
+    def generate_tensor_list(self):
+        """
+        stores all shapes and descriptions right into list of tensors
+        --> high memory consumption!
+        """
         # store all shapes as tensor in list
         for i in range(len(self.shapes["modelId"])):
             tensor = torch.from_numpy(self.shapes["data"][i]).float()

@@ -1,3 +1,4 @@
+from utils.RenderShape import RenderImage
 import torch
 import argparse
 import yaml
@@ -7,13 +8,11 @@ import numpy as np
 from utils.ConfigParser import retrieval_config_parser
 from models.Networks import TextEncoder, ShapeEncoder
 from dataloader.DataLoader import RetrievalLoader
-from utils.NearestNeighbor import find_nn, find_nn_cross_modal
-from utils.RenderShape import RenderImage
+from utils.NearestNeighbor import find_nn_text_2_text, find_nn_text_2_shape, \
+                                  find_nn_shape_2_shape, find_nn_shape_2_text
 
 #################################################################
 # TODO:
-#   GENERATING NEW LIST OF TENSORS IS VERY COSTLY IN RAM
-#   maybe format not all data into tensors!
 #
 #   Maybe later for using retrivals as metric for evaluation
 #   during training TripletLoader and RetrievalLoder needs to be
@@ -35,6 +34,8 @@ def main(config):
     load_directory.append(config['directories']['shape_model_load'])
     load_directory.append(config['directories']['text_model_load'])
 
+    # TODO: so far this is not necessary since loader base class
+    #       functions are sufficent to load required data
     dataloader = RetrievalLoader(config)
 
     k = config["hyper_parameters"]["k"]
@@ -46,6 +47,7 @@ def main(config):
     for version in retrieval_versions:
         # text 2 text retrieval
         if version == "t2t":
+            print(80 * '_')
             print("Running t2t retrieval ...")
             text_encoder = TextEncoder(dataloader.length_voc)
             temp_net = torch.load(load_directory[1], map_location=device)
@@ -54,23 +56,22 @@ def main(config):
 
             for n in range(config["hyper_parameters"]["n"]):
                 # this is the description for which the nearest neighbors are searched
-                rand = np.random.randint(0, len(dataloader.descriptions_t))
-                rand_desc = dataloader.descriptions_t[rand]
+                rand = np.random.randint(
+                    0, dataloader.get_description_length())
+                rand_desc = dataloader.get_description(rand)
 
-                closest_idx, closest_dist = find_nn(
-                    text_encoder, rand_desc, dataloader.descriptions_t, k)
+                closest_idx, closest_dist = find_nn_text_2_text(
+                    text_encoder, rand_desc, dataloader, k)
 
-                
-                rand_desc = rand_desc.cpu()
-                rand_desc = rand_desc.numpy()
                 rand_desc = rand_desc.reshape(96)
-                rand_desc = dataloader.txt_vectorization.vector2description(rand_desc)
+                rand_desc = dataloader.txt_vectorization.vector2description(
+                    rand_desc)
 
                 nearest_descriptions = []
 
                 for idx in closest_idx:
-                    d = dataloader.descriptions_t[idx].cpu()
-                    d = d.numpy().reshape(96)
+                    d = dataloader.get_description(idx)
+                    d = d.reshape(96)
                     nearest_descriptions.append(
                         dataloader.txt_vectorization.vector2description(d))
 
@@ -91,6 +92,7 @@ def main(config):
 
         # text 2 shape retrieval
         if version == "t2s":
+            print(80 * '_')
             print("Running t2s retrieval ...")
             shape_encoder = ShapeEncoder()
             temp_net = torch.load(load_directory[0], map_location=device)
@@ -103,48 +105,48 @@ def main(config):
             text_encoder.load_state_dict(temp_net)
 
             for n in range(config["hyper_parameters"]["n"]):
-                rand = np.random.randint(0, len(dataloader.descriptions_t))
-                rand_desc = dataloader.descriptions_t[rand]
+                rand = np.random.randint(
+                    0, dataloader.get_description_length())
+                rand_desc = dataloader.get_description(rand)
 
-                closest_idx, closest_dist = find_nn_cross_modal(text_encoder,
+                closest_idx, closest_dist= find_nn_text_2_shape(text_encoder,
                                                                 shape_encoder,
                                                                 rand_desc,
-                                                                dataloader.shapes_t,
+                                                                dataloader,
                                                                 k)
 
-                save_directory = config["directories"]["output"]
-                folder = "text2shape" + str(n) + str("/")
-                save_directory = os.path.join(save_directory, folder)
-                file_name = os.path.join(save_directory, "descripton.yaml")
+                save_directory=config["directories"]["output"]
+                folder="text2shape" + str(n) + str("/")
+                save_directory=os.path.join(save_directory, folder)
+                file_name=os.path.join(save_directory, "descripton.yaml")
 
                 if not os.path.exists(save_directory):
                     os.makedirs(save_directory)
 
                 # write description into yaml
-                rand_desc = rand_desc.cpu()
-                rand_desc = rand_desc.numpy()
-                rand_desc = rand_desc.reshape(96)
-                rand_desc = dataloader.txt_vectorization.vector2description(rand_desc)
+                rand_desc=rand_desc.reshape(96)
+                rand_desc=dataloader.txt_vectorization.vector2description(
+                    rand_desc)
 
                 dict_ = {"description": rand_desc}
 
                 with open(file_name, 'w+') as outfile:
                     yaml.dump(dict_, outfile, default_flow_style=False)
-                
+
                 for idx in closest_idx:
-                    n_shape = dataloader.shapes_t[idx].cpu()
-                    n_shape = n_shape.int()
-                    n_shape = n_shape.numpy().reshape(32, 32, 32, 4)
+                    n_shape = dataloader.get_shape(idx)
+                    n_shape = n_shape.reshape(32, 32, 32, 4)
                     render = RenderImage()
                     render.set_shape(n_shape)
                     render.set_name(str(idx))
                     render.render_voxels(save_directory)
-                
+
                 print("...dumped pngs {} of {}".format(
                     n, config["hyper_parameters"]["n"]))
 
         # shape 2 shape retrieval
         if version == "s2s":
+            print(80 * '_')
             print("Running s2s retrieval ...")
             shape_encoder = ShapeEncoder()
             temp_net = torch.load(load_directory[0], map_location=device)
@@ -153,11 +155,11 @@ def main(config):
 
             for n in range(config["hyper_parameters"]["n"]):
                 # this is the shape for which the nearest neighbors are searched
-                rand = np.random.randint(0, len(dataloader.shapes_t))
-                rand_shape = dataloader.shapes_t[rand]
+                rand = np.random.randint(0, dataloader.get_shape_length())
+                rand_shape = dataloader.get_shape(rand)
 
-                closest_idx, closest_dist = find_nn(
-                    shape_encoder, rand_shape, dataloader.shapes_t, k)
+                closest_idx, closest_dist = find_nn_shape_2_shape(
+                    shape_encoder, rand_shape, dataloader, k)
 
                 save_directory = config["directories"]["output"]
                 name = "shape2shape" + str(n) + str("/")
@@ -167,17 +169,16 @@ def main(config):
                     os.makedirs(save_directory)
 
                 # save png of selected shape
-                rand_shape = rand_shape.int().cpu()
-                rand_shape = rand_shape.numpy().reshape(32, 32, 32, 4)
+                rand_shape = rand_shape.astype(int)
+                rand_shape = rand_shape.reshape(32, 32, 32, 4)
                 render = RenderImage()
                 render.set_shape(rand_shape)
                 render.set_name("selected")
                 render.render_voxels(save_directory)
 
                 for idx in closest_idx:
-                    n_shape = dataloader.shapes_t[idx].cpu()
-                    n_shape = n_shape.int()
-                    n_shape = n_shape.numpy().reshape(32, 32, 32, 4)
+                    n_shape = dataloader.get_shape(idx)
+                    n_shape = n_shape.reshape(32, 32, 32, 4)
                     render = RenderImage()
                     render.set_shape(n_shape)
                     render.set_name(str(idx))
@@ -188,6 +189,7 @@ def main(config):
 
         # shape 2 text retrieval
         if version == "s2t":
+            print(80 * '_')
             print("Running s2t retrieval ...")
             shape_encoder = ShapeEncoder()
             temp_net = torch.load(load_directory[0], map_location=device)
@@ -200,13 +202,13 @@ def main(config):
             text_encoder.load_state_dict(temp_net)
 
             for n in range(config["hyper_parameters"]["n"]):
-                rand = np.random.randint(0, len(dataloader.shapes_t))
-                rand_shape = dataloader.shapes_t[rand]
+                rand = np.random.randint(0, dataloader.get_shape_length())
+                rand_shape = dataloader.get_shape(rand)
 
-                closest_idx, closest_dist = find_nn_cross_modal(shape_encoder,
+                closest_idx, closest_dist = find_nn_shape_2_text(shape_encoder,
                                                                 text_encoder,
                                                                 rand_shape,
-                                                                dataloader.descriptions_t,
+                                                                dataloader,
                                                                 k)
 
                 save_directory = config["directories"]["output"]
@@ -218,8 +220,7 @@ def main(config):
                     os.makedirs(save_directory)
 
                 # save png of selected shape
-                rand_shape = rand_shape.int().cpu()
-                rand_shape = rand_shape.numpy().reshape(32, 32, 32, 4)
+                rand_shape = rand_shape.reshape(32, 32, 32, 4)
                 render = RenderImage()
                 render.set_shape(rand_shape)
                 render.set_name("selected")
@@ -228,8 +229,8 @@ def main(config):
                 nearest_descriptions = []
 
                 for idx in closest_idx:
-                    d = dataloader.descriptions_t[idx].cpu()
-                    d = d.numpy().reshape(96)
+                    d = dataloader.get_description(idx)
+                    d = d.reshape(96)
                     nearest_descriptions.append(
                         dataloader.txt_vectorization.vector2description(d))
 
