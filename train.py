@@ -53,7 +53,7 @@ def main(config):
         for i in range(number_of_batches):
             print('Input {} of {} '.format(i, number_of_batches), end='\r')
 
-            batch = dataloader.get_batch("train")
+            batch = dataloader.get_smart_batch("train")
             eval_dict = trip_enc.update(batch)
 
             #if episode % 10 == 0:

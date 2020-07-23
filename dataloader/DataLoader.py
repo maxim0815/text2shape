@@ -3,6 +3,7 @@ import nrrd
 import pandas as pd
 import numpy as np
 import random
+import collections
 
 import sys
 import os
@@ -23,6 +24,7 @@ class Loader(object):
     '''
     def __init__(self, config):
         self.bs = config['hyper_parameters']['bs']
+        self.oversample = config['hyper_parameters']['oversample']
 
         try:
             self.descriptions = pd.read_csv(
@@ -143,6 +145,75 @@ class TripletLoader(Loader):
                     rand = np.random.randint(0, len(self.triplet_list))
                     batch.append(self.triplet_list[rand])
         return batch
+
+    def get_smart_batch(self, mode):
+
+        if mode == "train":
+            rand = np.random.randint(0, len(self.triplet_train), self.bs*self.oversample)
+        if mode == "test":
+            rand = np.random.randint(0, len(self.triplet_test), self.bs*self.oversample)
+        if mode == "all":
+            rand = np.random.randint(0, len(self.triplet_all), self.bs*self.oversample)
+
+        pos_descriptions = []
+        for index in rand:
+            if mode == "train":
+                if len(self.triplet_train) > 0:
+                    pos_descriptions.append(self.triplet_train[index].pos_desc)
+            if mode == "test":
+                if len(self.triplet_test) > 0:
+                    pos_descriptions.append(self.triplet_test[index].pos_desc)
+            if mode == "all":
+                if len(self.triplet_list) > 0:
+                    pos_descriptions.append(self.triplet_list[index].pos_desc)
+
+        all_pos_desc = [item for sublist in pos_descriptions for item in sublist] # flattens list
+        all_pos_desc = list(filter(lambda a: a != 0, all_pos_desc))               # remove a;; zeros
+        occurrences = collections.Counter(all_pos_desc)
+
+        scores = []
+        for description in pos_descriptions:
+            scores.append(self.comp_desc(pos_descriptions[0], description))
+        print(scores)
+
+        sorted_idx = np.argsort(scores)[::-1]
+        print(sorted_idx)
+        print(np.array(scores)[sorted_idx])
+
+        scores = []
+        for description in pos_descriptions:
+            scores.append(self.comp_desc(pos_descriptions[0], description, occurrences))
+        print(scores)
+
+        sorted_idx = np.argsort(scores)[::-1]
+        print(sorted_idx)
+        print(np.array(scores)[sorted_idx])
+
+        batch = []
+        for rand in sorted_idx[:self.bs]:
+            if mode == "train":
+                if len(self.triplet_train) > 0:
+                    batch.append(self.triplet_train[rand])
+            if mode == "test":
+                if len(self.triplet_test) > 0:
+                    batch.append(self.triplet_test[rand])
+            if mode == "all":
+                if len(self.triplet_list) > 0:
+                    batch.append(self.triplet_list[rand])
+        return batch
+
+    def comp_desc(self, original, new, weights=None):
+        intersection = set(original).intersection(new)
+
+        if weights == None:
+            return len(intersection)
+        else:
+            weighted_matches = 0
+            for each in intersection:
+                weighted_matches += weights[each]
+            return weighted_matches
+        
+
 
 
 def parse_directory_for_nrrd(path):
