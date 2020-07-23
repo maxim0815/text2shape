@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+
 def find_nn_text_2_text(model, input_, loader, k):
     model.eval()
     input_ = torch.from_numpy(input_).long()
@@ -27,6 +28,7 @@ def find_nn_text_2_text(model, input_, loader, k):
     closest_idx = idx[1:k+1]
     closest_dist = loss_L2[idx[1:k+1]]
     return closest_idx, closest_dist
+
 
 def find_nn_shape_2_shape(model, input_, loader, k):
     model.eval()
@@ -55,6 +57,7 @@ def find_nn_shape_2_shape(model, input_, loader, k):
     closest_idx = idx[1:k+1]
     closest_dist = loss_L2[idx[1:k+1]]
     return closest_idx, closest_dist
+
 
 def find_nn_shape_2_text(shape_model, text_model, input_, loader, k):
     shape_model.eval()
@@ -85,6 +88,7 @@ def find_nn_shape_2_text(shape_model, text_model, input_, loader, k):
     closest_dist = loss_L2[idx[1:k+1]]
     return closest_idx, closest_dist
 
+
 def find_nn_text_2_shape(text_model, shape_model,  input_, loader, k):
     shape_model.eval()
     text_model.eval()
@@ -113,3 +117,54 @@ def find_nn_text_2_shape(text_model, shape_model,  input_, loader, k):
     closest_idx = idx[1:k+1]
     closest_dist = loss_L2[idx[1:k+1]]
     return closest_idx, closest_dist
+
+
+def calculate_ndcg(idx_neighbor, idx_input, dataloader, n_neighbors, metric):
+    """
+    idx_neighbor:       indicies of all nearest  neighbors
+    idx_input:          index of what we computed the nearest neighbors to
+    dataloade:          backend holding all data
+    n_neighbors:        number of calculated neighbors == len(idx_neighbor)
+    metric:             t2t - t2s - s2t - s2s
+    """
+
+    rel_score = np.zeros((n_neighbors))
+    # ideal would be all nearest neighbor are from same category as input
+    rel_score_ideal = np.ones((n_neighbors))
+
+    if metric == "t2t":
+        true_label = dataloader.descriptions['category'][idx_input]
+        for i, id in enumerate(idx_neighbor):
+            label = dataloader.descriptions['category'][id]
+            rel_score[i] = np.asarray(label == true_label)
+    
+    if metric == "t2s":
+        true_label = dataloader.descriptions['category'][idx_input]
+        for i, id in enumerate(idx_neighbor):
+            label = dataloader.shapes['category'][id]
+            rel_score[i] = np.asarray(label == true_label)
+
+    if metric == "s2t":
+        true_label = dataloader.shapes['category'][idx_input]
+        for i, id in enumerate(idx_neighbor):
+            label = dataloader.descriptions['category'][id]
+            rel_score[i] = np.asarray(label == true_label)
+    
+    if metric == "s2s":
+        true_label = dataloader.shapes['category'][idx_input]
+        for i, id in enumerate(idx_neighbor):
+            label = dataloader.shapes['category'][id]
+            rel_score[i] = np.asarray(label == true_label)
+        
+
+    # Compute Discounted Cumulative Gain
+    nominator = np.exp2(rel_score) - 1
+    denominator = np.log2(np.arange(1,n_neighbors+1)+1)
+    dcg = np.sum(nominator/denominator)
+    dcg_n_ideal = np.exp2(rel_score_ideal) - 1
+    dcg_ideal = np.sum(dcg_n_ideal/denominator)
+
+    # Compute normalized dcg
+    ndcg = dcg / dcg_ideal
+
+    return ndcg

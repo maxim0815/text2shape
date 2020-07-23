@@ -44,6 +44,24 @@ class Loader(object):
 
         self.length_voc = len(self.txt_vectorization.voc_list)
 
+        self.__add_category_to_shape()
+    
+    def __add_category_to_shape(self):
+        category = dict()
+        for i, shape_id in enumerate(self.shapes['modelId']):
+            cat = "none"
+            found_category = False
+            for key, value in self.descriptions["modelId"].items():
+                if value == shape_id:
+                    found_category = True
+                    break
+            if found_category == True:
+                cat = self.descriptions['category'][key]
+                category[i] = cat
+        self.shapes['category'] = category
+        
+
+
     def get_shape_length(self):
         return len(self.shapes["modelId"])
 

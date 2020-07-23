@@ -9,7 +9,8 @@ from utils.ConfigParser import retrieval_config_parser
 from models.Networks import TextEncoder, ShapeEncoder
 from dataloader.DataLoader import RetrievalLoader
 from utils.NearestNeighbor import find_nn_text_2_text, find_nn_text_2_shape, \
-                                  find_nn_shape_2_shape, find_nn_shape_2_text
+    find_nn_shape_2_shape, find_nn_shape_2_text, \
+    calculate_ndcg
 
 #################################################################
 # TODO:
@@ -60,8 +61,13 @@ def main(config):
                     0, dataloader.get_description_length())
                 rand_desc = dataloader.get_description(rand)
 
-                closest_idx, closest_dist = find_nn_text_2_text(
-                    text_encoder, rand_desc, dataloader, k)
+                closest_idx, closest_dist = find_nn_text_2_text(text_encoder,
+                                                                rand_desc,
+                                                                dataloader,
+                                                                k)
+
+                ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "t2t")
+                print(ndcg)
 
                 rand_desc = rand_desc.reshape(96)
                 rand_desc = dataloader.txt_vectorization.vector2description(
@@ -109,23 +115,26 @@ def main(config):
                     0, dataloader.get_description_length())
                 rand_desc = dataloader.get_description(rand)
 
-                closest_idx, closest_dist= find_nn_text_2_shape(text_encoder,
-                                                                shape_encoder,
-                                                                rand_desc,
-                                                                dataloader,
-                                                                k)
+                closest_idx, closest_dist = find_nn_text_2_shape(text_encoder,
+                                                                 shape_encoder,
+                                                                 rand_desc,
+                                                                 dataloader,
+                                                                 k)
 
-                save_directory=config["directories"]["output"]
-                folder="text2shape" + str(n) + str("/")
-                save_directory=os.path.join(save_directory, folder)
-                file_name=os.path.join(save_directory, "descripton.yaml")
+                ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "t2s")
+                print(ndcg)
+
+                save_directory = config["directories"]["output"]
+                folder = "text2shape" + str(n) + str("/")
+                save_directory = os.path.join(save_directory, folder)
+                file_name = os.path.join(save_directory, "descripton.yaml")
 
                 if not os.path.exists(save_directory):
                     os.makedirs(save_directory)
 
                 # write description into yaml
-                rand_desc=rand_desc.reshape(96)
-                rand_desc=dataloader.txt_vectorization.vector2description(
+                rand_desc = rand_desc.reshape(96)
+                rand_desc = dataloader.txt_vectorization.vector2description(
                     rand_desc)
 
                 dict_ = {"description": rand_desc}
@@ -158,8 +167,13 @@ def main(config):
                 rand = np.random.randint(0, dataloader.get_shape_length())
                 rand_shape = dataloader.get_shape(rand)
 
-                closest_idx, closest_dist = find_nn_shape_2_shape(
-                    shape_encoder, rand_shape, dataloader, k)
+                closest_idx, closest_dist = find_nn_shape_2_shape(shape_encoder,
+                                                                  rand_shape, 
+                                                                  dataloader, 
+                                                                  k)
+                
+                ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "s2s")
+                print(ndcg)
 
                 save_directory = config["directories"]["output"]
                 name = "shape2shape" + str(n) + str("/")
@@ -206,10 +220,13 @@ def main(config):
                 rand_shape = dataloader.get_shape(rand)
 
                 closest_idx, closest_dist = find_nn_shape_2_text(shape_encoder,
-                                                                text_encoder,
-                                                                rand_shape,
-                                                                dataloader,
-                                                                k)
+                                                                 text_encoder,
+                                                                 rand_shape,
+                                                                 dataloader,
+                                                                 k)
+
+                ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "s2t")
+                print(ndcg)
 
                 save_directory = config["directories"]["output"]
                 folder = "shape2text" + str(n) + str("/")
