@@ -61,7 +61,7 @@ def main(config):
 
             if episode % 10 == 0:
                 # run evaluation on one batch
-                batch_eval = dataloader.get_batch("test")
+                batch_eval = dataloader.get_smart_batch("test")
                 eval_dict = trip_enc.predict(batch_eval)
 
                 tensorboard_eval.write_episode_data(episode, eval_dict)
