@@ -60,8 +60,6 @@ class Loader(object):
                 category[i] = cat
         self.shapes['category'] = category
         
-
-
     def get_shape_length(self):
         return len(self.shapes["modelId"])
 

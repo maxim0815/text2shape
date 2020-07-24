@@ -45,6 +45,8 @@ def main(config):
 
     retrieval_versions = config["version"]
 
+    ndcg_dict = {}
+
     for version in retrieval_versions:
         # text 2 text retrieval
         if version == "t2t":
@@ -54,6 +56,8 @@ def main(config):
             temp_net = torch.load(load_directory[1], map_location=device)
             text_encoder = text_encoder.to(device)
             text_encoder.load_state_dict(temp_net)
+
+            ndcg_list = []
 
             for n in range(config["hyper_parameters"]["n"]):
                 # this is the description for which the nearest neighbors are searched
@@ -67,7 +71,8 @@ def main(config):
                                                                 k)
 
                 ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "t2t")
-                print(ndcg)
+                ndcg_list.append(ndcg)
+                print("...NDCG score : {:.2f}".format(ndcg))
 
                 rand_desc = rand_desc.reshape(96)
                 rand_desc = dataloader.txt_vectorization.vector2description(
@@ -95,6 +100,8 @@ def main(config):
 
                 print("...dumped file {} of {}".format(
                     n, config["hyper_parameters"]["n"]))
+            
+            ndcg_dict[version] = ndcg_list
 
         # text 2 shape retrieval
         if version == "t2s":
@@ -110,6 +117,8 @@ def main(config):
             text_encoder = text_encoder.to(device)
             text_encoder.load_state_dict(temp_net)
 
+            ndcg_list = []
+
             for n in range(config["hyper_parameters"]["n"]):
                 rand = np.random.randint(
                     0, dataloader.get_description_length())
@@ -122,7 +131,8 @@ def main(config):
                                                                  k)
 
                 ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "t2s")
-                print(ndcg)
+                ndcg_list.append(ndcg)
+                print("...NDCG score : {:.2f}".format(ndcg))
 
                 save_directory = config["directories"]["output"]
                 folder = "text2shape" + str(n) + str("/")
@@ -152,6 +162,9 @@ def main(config):
 
                 print("...dumped pngs {} of {}".format(
                     n, config["hyper_parameters"]["n"]))
+            
+            ndcg_dict[version] = ndcg_list
+
 
         # shape 2 shape retrieval
         if version == "s2s":
@@ -161,6 +174,8 @@ def main(config):
             temp_net = torch.load(load_directory[0], map_location=device)
             shape_encoder = shape_encoder.to(device)
             shape_encoder.load_state_dict(temp_net)
+
+            ndcg_list = []
 
             for n in range(config["hyper_parameters"]["n"]):
                 # this is the shape for which the nearest neighbors are searched
@@ -173,7 +188,8 @@ def main(config):
                                                                   k)
                 
                 ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "s2s")
-                print(ndcg)
+                ndcg_list.append(ndcg)
+                print("...NDCG score : {:.2f}".format(ndcg))
 
                 save_directory = config["directories"]["output"]
                 name = "shape2shape" + str(n) + str("/")
@@ -201,6 +217,8 @@ def main(config):
                 print("...dumped pngs {} of {}".format(
                     n, config["hyper_parameters"]["n"]))
 
+            ndcg_dict[version] = ndcg_list
+
         # shape 2 text retrieval
         if version == "s2t":
             print(80 * '_')
@@ -215,6 +233,8 @@ def main(config):
             text_encoder = text_encoder.to(device)
             text_encoder.load_state_dict(temp_net)
 
+            ndcg_list = []
+
             for n in range(config["hyper_parameters"]["n"]):
                 rand = np.random.randint(0, dataloader.get_shape_length())
                 rand_shape = dataloader.get_shape(rand)
@@ -226,7 +246,8 @@ def main(config):
                                                                  k)
 
                 ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "s2t")
-                print(ndcg)
+                ndcg_list.append(ndcg)
+                print("...NDCG score : {:.2f}".format(ndcg))
 
                 save_directory = config["directories"]["output"]
                 folder = "shape2text" + str(n) + str("/")
@@ -258,7 +279,16 @@ def main(config):
 
                 print("...dumped file {} of {}".format(
                     n, config["hyper_parameters"]["n"]))
+            
+            ndcg_dict[version] = ndcg_list
 
+    print("...dumping ndcg score")
+    save_directory = config["directories"]["output"]
+    file_name = os.path.join(save_directory, "ndcg_scores.yaml")
+    with open(file_name, 'w+') as outfile:
+        yaml.dump(ndcg_dict, outfile, default_flow_style=False)
+    
+    print("Retrieval task finished")
 
 if __name__ == '__main__':
     args = parse_arguments()
