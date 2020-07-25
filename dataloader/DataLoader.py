@@ -199,6 +199,14 @@ class TripletLoader(object):
                 shape = self.train_data.shapes['data'][rand]
 
                 pos_id = self.__find_positive_description_id(shape_id)
+                # in case of no matching positive description is found
+                while pos_id == None:
+                    rand = np.random.randint(0, self.train_data.get_shape_length())
+                    shape_id = self.train_data.shapes["modelId"][rand]
+                    shape = self.train_data.shapes['data'][rand]
+
+                    pos_id = self.__find_positive_description_id(shape_id)
+                
                 pos_desc = self.train_data.descriptions["description"][pos_id]
 
                 neg_id = self.__find_negative_desciption_id(shape_id)
@@ -218,6 +226,14 @@ class TripletLoader(object):
                 shape = self.test_data.shapes['data'][rand]
 
                 pos_id = self.__find_positive_description_id(shape_id, data="test")
+                # in case of no matching positive description is found
+                while pos_id == None:
+                    rand = np.random.randint(0, self.test_data.get_shape_length())
+                    shape_id = self.test_data.shapes["modelId"][rand]
+                    shape = self.test_data.shapes['data'][rand]
+
+                    pos_id = self.__find_positive_description_id(shape_id, data="test")
+
                 pos_desc = self.test_data.descriptions["description"][pos_id]
 
                 neg_id = self.__find_negative_desciption_id(shape_id, data="test")
@@ -236,14 +252,16 @@ class TripletLoader(object):
             matching_idx = [i for i, x in enumerate(
                 self.train_data.descriptions['modelId']) if x == shape_id]
             if len(matching_idx) == 0:
-                print("HUI")
+                print("MISSING DESCIPTION FOR ID : {}".format(shape_id))
+                return None
             rand = np.random.randint(0, len(matching_idx))
             return matching_idx[rand]
         if data == "test":
             matching_idx = [i for i, x in enumerate(
                 self.test_data.descriptions['modelId']) if x == shape_id]
             if len(matching_idx) == 0:
-                print("HUI")
+                print("MISSING DESCIPTION FOR ID : {}".format(shape_id))
+                return None
             rand = np.random.randint(0, len(matching_idx))
             return matching_idx[rand]
 

@@ -30,7 +30,7 @@ def main(config):
     stats = ["loss", "accuracy"]
     tensorboard = Evaluation(
         dirs['tensorboard'], config['name'], stats, hyper_parameters)
-    
+
     stats_eval = ["loss", "accuracy", "ndcg"]
     tensorboard_eval = Evaluation(
         dirs['tensorboard'], config['name']+"_eval", stats_eval)
@@ -43,51 +43,67 @@ def main(config):
 
     print("...starting training")
 
-    episode = 0
     best_eval_loss = float('inf')
+    best_ndcg = 0.0
 
     for ep in range(epochs):
         print("...starting with epoch {} of {}".format(ep, epochs))
 
-# TODO: this is bullshit --> look for smart way
+        # TRAIN
         number_of_batches = int(
-            dataloader.train_data.get_description_length()/dataloader.bs)
+            dataloader.train_data.get_shape_length()/dataloader.bs)
+        epoch_train_dict = eval_dict = {"loss": 0.0, "accuracy": 0.0}
         for i in range(number_of_batches):
-            print('Input {} of {} '.format(i, number_of_batches), end='\r')
+            print('TRAIN: input {} of {} '.format(
+                i, number_of_batches), end='\r')
 
             batch = dataloader.get_train_batch("s2t")
             train_dict = trip_enc.update(batch)
+            epoch_train_dict["loss"] += train_dict["loss"]
+            epoch_train_dict["accuracy"] += train_dict["accuracy"]
 
-            # if episode % 10 == 0:
-            tensorboard.write_episode_data(episode, train_dict)
+        train_dict = {"loss": epoch_train_dict["loss"]/number_of_batches,
+                      "accuracy": epoch_train_dict["accuracy"]/number_of_batches}
+        tensorboard.write_episode_data(ep, train_dict)
 
-        if episode % 10 == 0:
-            # run evaluation on one batch
-            batch_eval = dataloader.get_test_batch("s2t")
+        # EVAL
+        number_of_batches = int(
+            dataloader.test_data.get_shape_length()/dataloader.bs)
+        epoch_eval_dict = {"loss": 0.0, "accuracy": 0.0, "ndcg": 0.0}
+        for i in range(number_of_batches):
+            print('EVAL: input {} of {} '.format(
+                i, number_of_batches), end='\r')
 
-            # run on metric
-            if config['metric'] == "s2t":
-                rand = np.random.randint(0, dataloader.test_data.get_shape_length())
-                rand_shape = dataloader.test_data.get_shape(rand)
-                closest_idx, _ = find_nn_shape_2_text(trip_enc.shape_encoder,
-                                                                    trip_enc.text_encoder,
-                                                                    rand_shape,
-                                                                    dataloader.test_data,
-                                                                    8)
-                ndcg = calculate_ndcg(closest_idx, rand, dataloader.test_data, 8, "s2t")
-            
-            eval_dict = trip_enc.predict(batch_eval)
-            eval_dict['ndcg'] = ndcg
+            batch = dataloader.get_test_batch("s2t")
+            eval_dict = trip_enc.predict(batch)
+            epoch_eval_dict["loss"] += eval_dict["loss"]
+            epoch_eval_dict["accuracy"] += eval_dict["accuracy"]
 
-            tensorboard_eval.write_episode_data(episode, eval_dict)
+        # run on metric
+        if config['metric'] == "s2t":
+            rand = np.random.randint(
+                0, dataloader.test_data.get_shape_length())
+            rand_shape = dataloader.test_data.get_shape(rand)
+            closest_idx, _ = find_nn_shape_2_text(trip_enc.shape_encoder,
+                                                  trip_enc.text_encoder,
+                                                  rand_shape,
+                                                  dataloader.test_data,
+                                                  8)
+            ndcg = calculate_ndcg(
+                closest_idx, rand, dataloader.test_data, 8, "s2t")
 
-            if eval_dict["loss"] < best_eval_loss:
-                best_eval_loss = eval_dict["loss"]
-                print(
-                    "...new best eval Loss {} --> saving models".format(best_eval_loss))
-                trip_enc.save_models()
+        eval_dict = {"loss": epoch_eval_dict["loss"]/number_of_batches,
+                     "accuracy": epoch_eval_dict["accuracy"]/number_of_batches,
+                     "ndcg": ndcg}
 
-        episode += 1
+        tensorboard_eval.write_episode_data(ep, eval_dict)
+
+        if eval_dict["ndcg"] < best_ndcg:
+            best_ndcg = eval_dict["ndcg"]
+            print(
+                "...new best eval ndcg {} --> saving models".format(best_ndcg))
+            trip_enc.save_models()
+
     print("FINISHED")
 
 
