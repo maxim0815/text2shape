@@ -215,37 +215,51 @@ class TripletLoader(object):
             for _ in range(self.bs):
                 rand = np.random.randint(0, self.test_data.get_shape_length())
                 shape_id = self.test_data.shapes["modelId"][rand]
-                shape = self.test_data.shapes['data'[rand]]
+                shape = self.test_data.shapes['data'][rand]
 
-                pos_id = self.__find_positive_description_id(shape_id)
+                pos_id = self.__find_positive_description_id(shape_id, data="test")
                 pos_desc = self.test_data.descriptions["description"][pos_id]
-                pos_desc = self.txt_vectorization.description2vector(pos_desc)
 
-                neg_id = self.__find_negative_desciption_id(shape_id)
+                neg_id = self.__find_negative_desciption_id(shape_id, data="test")
                 neg_desc = self.test_data.descriptions["description"][neg_id]
-                neg_desc = self.txt_vectorization.description2vector(neg_desc)
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
 
                 batch.append(triplet)
         return batch
 
-    def __find_positive_description_id(self, shape_id):
+    def __find_positive_description_id(self, shape_id, data="train"):
         """
         return random matching idx of all desciptions
         """
-        matching_idx = [i for i, x in enumerate(
-            self.train_data.descriptions['modelId']) if x == shape_id]
+        if data == "train":
+            matching_idx = [i for i, x in enumerate(
+                self.train_data.descriptions['modelId']) if x == shape_id]
+            if len(matching_idx) == 0:
+                print("HUI")
+            rand = np.random.randint(0, len(matching_idx))
+            return matching_idx[rand]
+        if data == "test":
+            matching_idx = [i for i, x in enumerate(
+                self.test_data.descriptions['modelId']) if x == shape_id]
+            if len(matching_idx) == 0:
+                print("HUI")
+            rand = np.random.randint(0, len(matching_idx))
+            return matching_idx[rand]
 
-        rand = np.random.randint(0, len(matching_idx))
-        return matching_idx[rand]
-
-    def __find_negative_desciption_id(self, shape_id):
-        max_val = len(self.train_data.descriptions["modelId"])
-        rand = np.random.randint(0, max_val)
-        while self.train_data.descriptions["modelId"][rand] == shape_id:
+    def __find_negative_desciption_id(self, shape_id, data="train"):
+        if data == "train":
+            max_val = len(self.train_data.descriptions["modelId"])
             rand = np.random.randint(0, max_val)
-        return rand
+            while self.train_data.descriptions["modelId"][rand] == shape_id:
+                rand = np.random.randint(0, max_val)
+            return rand
+        if data == "test":
+            max_val = len(self.test_data.descriptions["modelId"])
+            rand = np.random.randint(0, max_val)
+            while self.test_data.descriptions["modelId"][rand] == shape_id:
+                rand = np.random.randint(0, max_val)
+            return rand
 
 
 class RetrievalLoader(DataLoader):
