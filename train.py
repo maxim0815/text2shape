@@ -40,6 +40,7 @@ def main(config):
     trip_enc = TripletEncoder(config, dataloader.length_voc)
 
     epochs = config['hyper_parameters']['ep']
+    n_neighbors = config['nns']
 
     print("...starting training")
 
@@ -88,9 +89,10 @@ def main(config):
                                                   trip_enc.text_encoder,
                                                   rand_shape,
                                                   dataloader.test_data,
-                                                  8)
+                                                  n_neighbors)
             ndcg = calculate_ndcg(
-                closest_idx, rand, dataloader.test_data, 8, "s2t")
+                closest_idx, rand, dataloader.test_data, n_neighbors, "s2t")
+        # TODO: add other metrics
 
         eval_dict = {"loss": epoch_eval_dict["loss"]/number_of_batches,
                      "accuracy": epoch_eval_dict["accuracy"]/number_of_batches,
