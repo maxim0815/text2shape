@@ -5,6 +5,8 @@ hyper_parameters:
   mom: 0.9
   wd: 0.0001
   ep: 0
+metric: "s2t"
+nns: 20
 directories:
   train_data: "test/test_shapes/"
   train_labels: "test/test_captions.csv"
