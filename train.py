@@ -123,8 +123,6 @@ def main(config):
 
     print("...starting training")
 
-    best_eval_loss = float('inf')
-
     for ep in range(epochs):
         print("...starting with epoch {} of {}".format(ep, epochs))
 

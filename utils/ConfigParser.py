@@ -23,6 +23,8 @@ def config_parser(config_file, print_config=True):
 		raise Exception("Check config file - No hyper parameters within config file")
 	if 'metric' not in cfg:
 		raise Exception("Check config file - No metric within config file")
+	if len(cfg['metric']) > 4:
+		raise Exception("Check config file - More than four metrices within config file")
 	if 'nns' not in cfg:
 		raise Exception("Check config file - No nns within config file")
 	if 'directories' not in cfg:
