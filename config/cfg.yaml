@@ -1,15 +1,15 @@
 name: "embeddings"
 hyper_parameters:
   lr: 0.001
-  bs: 64
+  bs: 4
   mom: 0.9
   wd: 0.0001
   ep: 100
-metric: "s2t"
+metric: ["s2t", "t2s"]
 nns: 20
 directories:
-  train_data: "data/nrrd_256_filter_div_32_solid/"
-  train_labels: "data/full_preprocessed.captions.csv"
+  train_data: "data/few_nrrd_256_filter_div_32_solid/"
+  train_labels: "data/few_preprocessed.captions.csv"
   vocabulary: "data/full_voc.csv"
   text_model_load: "output/"
   shape_model_load: "output/"

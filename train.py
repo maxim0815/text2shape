@@ -7,7 +7,8 @@ import numpy as np
 
 from utils.ConfigParser import config_parser
 from utils.TensorboardEvaluation import Evaluation
-from utils.NearestNeighbor import find_nn_shape_2_text, calculate_ndcg
+from utils.NearestNeighbor import find_nn_shape_2_text, find_nn_shape_2_shape, \
+    find_nn_text_2_shape, find_nn_text_2_text, calculate_ndcg
 
 from dataloader.DataLoader import TripletLoader
 
@@ -23,15 +24,94 @@ def parse_arguments():
     return args
 
 
+def run_metric(metric_list, n_neighbors, dataloader, encoder):
+    ndcg_scores = dict()
+    for metric in metric_list:
+        if metric == "s2t":
+            rand = np.random.randint(
+                0, dataloader.test_data.get_shape_length())
+            rand_shape = dataloader.test_data.get_shape(rand)
+            closest_idx, _ = find_nn_shape_2_text(encoder.shape_encoder,
+                                                  encoder.text_encoder,
+                                                  rand_shape,
+                                                  dataloader.test_data,
+                                                  n_neighbors)
+            ndcg = calculate_ndcg(
+                closest_idx, rand, dataloader.test_data, n_neighbors, "s2t")
+            ndcg_scores["s2t_ndcg"] = ndcg
+
+        if metric == "s2s":
+            rand = np.random.randint(
+                0, dataloader.test_data.get_shape_length())
+            rand_shape = dataloader.test_data.get_shape(rand)
+            closest_idx, _ = find_nn_shape_2_shape(encoder.shape_encoder,
+                                                   rand_shape,
+                                                   dataloader.test_data,
+                                                   n_neighbors)
+            ndcg = calculate_ndcg(
+                closest_idx, rand, dataloader.test_data, n_neighbors, "s2s")
+            ndcg_scores["s2s_ndcg"] = ndcg
+
+        if metric == "t2t":
+            rand = np.random.randint(
+                0, dataloader.test_data.get_description_length())
+            rand_desc = dataloader.test_data.get_description(rand)
+            closest_idx, _ = find_nn_text_2_text(encoder.text_encoder,
+                                                 rand_desc,
+                                                 dataloader.test_data,
+                                                 n_neighbors)
+            ndcg = calculate_ndcg(
+                closest_idx, rand, dataloader.test_data, n_neighbors, "t2t")
+            ndcg_scores["t2t_ndcg"] = ndcg
+
+        if metric == "t2s":
+            rand = np.random.randint(
+                0, dataloader.test_data.get_description_length())
+            rand_desc = dataloader.test_data.get_description(rand)
+            closest_idx, _ = find_nn_text_2_shape(encoder.text_encoder,
+                                                  encoder.shape_encoder,
+                                                  rand_desc,
+                                                  dataloader.test_data,
+                                                  n_neighbors)
+            ndcg = calculate_ndcg(
+                closest_idx, rand, dataloader.test_data, n_neighbors, "t2s")
+            ndcg_scores["t2s_ndcg"] = ndcg
+
+    return ndcg_scores
+
+
+def better_ndcg_scores(ndcg_scores, best_ndcg_scores):
+    larger_ndcg_scores = list()
+    for key, _ in ndcg_scores.items():
+        if ndcg_scores[key] >= best_ndcg_scores[key]:
+            larger_ndcg_scores.append(1)
+    if len(ndcg_scores) == 1:
+        if len(larger_ndcg_scores) > 0:
+            return True
+        else:
+            False
+    if len(ndcg_scores) > 1:
+        if len(larger_ndcg_scores) >= len(ndcg_scores)-1:
+            return True
+        else:
+            False
+
+
 def main(config):
     hyper_parameters = config['hyper_parameters']
     dirs = config['directories']
+    metric = config["metric"]
 
     stats = ["loss", "accuracy"]
     tensorboard = Evaluation(
         dirs['tensorboard'], config['name'], stats, hyper_parameters)
 
-    stats_eval = ["loss", "accuracy", "ndcg"]
+    stats_eval = ["loss", "accuracy"]
+    best_ndcg_scores = dict()
+    for met in metric:
+        stats_eval.append(met+"_ndcg")
+        best_ndcg_scores[met+"_ndcg"] = 0.0
+
     tensorboard_eval = Evaluation(
         dirs['tensorboard'], config['name']+"_eval", stats_eval)
 
@@ -40,12 +120,10 @@ def main(config):
     trip_enc = TripletEncoder(config, dataloader.length_voc)
 
     epochs = config['hyper_parameters']['ep']
-    n_neighbors = config['nns']
 
     print("...starting training")
 
     best_eval_loss = float('inf')
-    best_ndcg = 0.0
 
     for ep in range(epochs):
         print("...starting with epoch {} of {}".format(ep, epochs))
@@ -81,29 +159,22 @@ def main(config):
             epoch_eval_dict["accuracy"] += eval_dict["accuracy"]
 
         # run on metric
-        if config['metric'] == "s2t":
-            rand = np.random.randint(
-                0, dataloader.test_data.get_shape_length())
-            rand_shape = dataloader.test_data.get_shape(rand)
-            closest_idx, _ = find_nn_shape_2_text(trip_enc.shape_encoder,
-                                                  trip_enc.text_encoder,
-                                                  rand_shape,
-                                                  dataloader.test_data,
-                                                  n_neighbors)
-            ndcg = calculate_ndcg(
-                closest_idx, rand, dataloader.test_data, n_neighbors, "s2t")
-        # TODO: add other metrics
+        ndcg_scores = run_metric(
+            config["metric"], config['nns'], dataloader, trip_enc)
 
-        eval_dict = {"loss": epoch_eval_dict["loss"]/number_of_batches,
-                     "accuracy": epoch_eval_dict["accuracy"]/number_of_batches,
-                     "ndcg": ndcg}
+        eval_dict["loss"] = epoch_eval_dict["loss"]/number_of_batches
+        eval_dict["accuracy"] = epoch_eval_dict["accuracy"]/number_of_batches
+
+        for key, value in ndcg_scores.items():
+            eval_dict[key] = value
 
         tensorboard_eval.write_episode_data(ep, eval_dict)
 
-        if eval_dict["ndcg"] < best_ndcg:
-            best_ndcg = eval_dict["ndcg"]
-            print(
-                "...new best eval ndcg {} --> saving models".format(best_ndcg))
+        # check if ndcg scores are better than before
+
+        if better_ndcg_scores(ndcg_scores, best_ndcg_scores):
+            best_ndcg_scores = ndcg_scores
+            print("...new best eval ndcg score(s) --> saving models")
             trip_enc.save_models()
 
     print("FINISHED")
