@@ -9,7 +9,8 @@ from utils.ConfigParser import retrieval_config_parser
 from models.Networks import TextEncoder, ShapeEncoder
 from dataloader.DataLoader import RetrievalLoader
 from utils.NearestNeighbor import find_nn_text_2_text, find_nn_text_2_shape, \
-                                  find_nn_shape_2_shape, find_nn_shape_2_text
+    find_nn_shape_2_shape, find_nn_shape_2_text, \
+    calculate_ndcg
 
 #################################################################
 # TODO:
@@ -44,6 +45,8 @@ def main(config):
 
     retrieval_versions = config["version"]
 
+    ndcg_dict = {}
+
     for version in retrieval_versions:
         # text 2 text retrieval
         if version == "t2t":
@@ -54,14 +57,22 @@ def main(config):
             text_encoder = text_encoder.to(device)
             text_encoder.load_state_dict(temp_net)
 
+            ndcg_list = []
+
             for n in range(config["hyper_parameters"]["n"]):
                 # this is the description for which the nearest neighbors are searched
                 rand = np.random.randint(
                     0, dataloader.get_description_length())
                 rand_desc = dataloader.get_description(rand)
 
-                closest_idx, closest_dist = find_nn_text_2_text(
-                    text_encoder, rand_desc, dataloader, k)
+                closest_idx, closest_dist = find_nn_text_2_text(text_encoder,
+                                                                rand_desc,
+                                                                dataloader,
+                                                                k)
+
+                ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "t2t")
+                ndcg_list.append(ndcg)
+                print("...NDCG score : {:.2f}".format(ndcg))
 
                 rand_desc = rand_desc.reshape(96)
                 rand_desc = dataloader.txt_vectorization.vector2description(
@@ -89,6 +100,8 @@ def main(config):
 
                 print("...dumped file {} of {}".format(
                     n, config["hyper_parameters"]["n"]))
+            
+            ndcg_dict[version] = ndcg_list
 
         # text 2 shape retrieval
         if version == "t2s":
@@ -104,28 +117,34 @@ def main(config):
             text_encoder = text_encoder.to(device)
             text_encoder.load_state_dict(temp_net)
 
+            ndcg_list = []
+
             for n in range(config["hyper_parameters"]["n"]):
                 rand = np.random.randint(
                     0, dataloader.get_description_length())
                 rand_desc = dataloader.get_description(rand)
 
-                closest_idx, closest_dist= find_nn_text_2_shape(text_encoder,
-                                                                shape_encoder,
-                                                                rand_desc,
-                                                                dataloader,
-                                                                k)
+                closest_idx, closest_dist = find_nn_text_2_shape(text_encoder,
+                                                                 shape_encoder,
+                                                                 rand_desc,
+                                                                 dataloader,
+                                                                 k)
 
-                save_directory=config["directories"]["output"]
-                folder="text2shape" + str(n) + str("/")
-                save_directory=os.path.join(save_directory, folder)
-                file_name=os.path.join(save_directory, "descripton.yaml")
+                ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "t2s")
+                ndcg_list.append(ndcg)
+                print("...NDCG score : {:.2f}".format(ndcg))
+
+                save_directory = config["directories"]["output"]
+                folder = "text2shape" + str(n) + str("/")
+                save_directory = os.path.join(save_directory, folder)
+                file_name = os.path.join(save_directory, "descripton.yaml")
 
                 if not os.path.exists(save_directory):
                     os.makedirs(save_directory)
 
                 # write description into yaml
-                rand_desc=rand_desc.reshape(96)
-                rand_desc=dataloader.txt_vectorization.vector2description(
+                rand_desc = rand_desc.reshape(96)
+                rand_desc = dataloader.txt_vectorization.vector2description(
                     rand_desc)
 
                 dict_ = {"description": rand_desc}
@@ -143,6 +162,9 @@ def main(config):
 
                 print("...dumped pngs {} of {}".format(
                     n, config["hyper_parameters"]["n"]))
+            
+            ndcg_dict[version] = ndcg_list
+
 
         # shape 2 shape retrieval
         if version == "s2s":
@@ -153,13 +175,21 @@ def main(config):
             shape_encoder = shape_encoder.to(device)
             shape_encoder.load_state_dict(temp_net)
 
+            ndcg_list = []
+
             for n in range(config["hyper_parameters"]["n"]):
                 # this is the shape for which the nearest neighbors are searched
                 rand = np.random.randint(0, dataloader.get_shape_length())
                 rand_shape = dataloader.get_shape(rand)
 
-                closest_idx, closest_dist = find_nn_shape_2_shape(
-                    shape_encoder, rand_shape, dataloader, k)
+                closest_idx, closest_dist = find_nn_shape_2_shape(shape_encoder,
+                                                                  rand_shape, 
+                                                                  dataloader, 
+                                                                  k)
+                
+                ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "s2s")
+                ndcg_list.append(ndcg)
+                print("...NDCG score : {:.2f}".format(ndcg))
 
                 save_directory = config["directories"]["output"]
                 name = "shape2shape" + str(n) + str("/")
@@ -187,6 +217,8 @@ def main(config):
                 print("...dumped pngs {} of {}".format(
                     n, config["hyper_parameters"]["n"]))
 
+            ndcg_dict[version] = ndcg_list
+
         # shape 2 text retrieval
         if version == "s2t":
             print(80 * '_')
@@ -201,15 +233,21 @@ def main(config):
             text_encoder = text_encoder.to(device)
             text_encoder.load_state_dict(temp_net)
 
+            ndcg_list = []
+
             for n in range(config["hyper_parameters"]["n"]):
                 rand = np.random.randint(0, dataloader.get_shape_length())
                 rand_shape = dataloader.get_shape(rand)
 
                 closest_idx, closest_dist = find_nn_shape_2_text(shape_encoder,
-                                                                text_encoder,
-                                                                rand_shape,
-                                                                dataloader,
-                                                                k)
+                                                                 text_encoder,
+                                                                 rand_shape,
+                                                                 dataloader,
+                                                                 k)
+
+                ndcg = calculate_ndcg(closest_idx, rand, dataloader, k, "s2t")
+                ndcg_list.append(ndcg)
+                print("...NDCG score : {:.2f}".format(ndcg))
 
                 save_directory = config["directories"]["output"]
                 folder = "shape2text" + str(n) + str("/")
@@ -241,7 +279,16 @@ def main(config):
 
                 print("...dumped file {} of {}".format(
                     n, config["hyper_parameters"]["n"]))
+            
+            ndcg_dict[version] = ndcg_list
 
+    print("...dumping ndcg score")
+    save_directory = config["directories"]["output"]
+    file_name = os.path.join(save_directory, "ndcg_scores.yaml")
+    with open(file_name, 'w+') as outfile:
+        yaml.dump(ndcg_dict, outfile, default_flow_style=False)
+    
+    print("Retrieval task finished")
 
 if __name__ == '__main__':
     args = parse_arguments()
