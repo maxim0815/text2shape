@@ -271,9 +271,6 @@ class TripletLoader(object):
             scores.append(self.comp_desc(pos_descriptions[0], description, occurrences))
         
         sorted_idx = np.argsort(scores)[::-1] # sort ascending order
-        print(np.array(scores)[sorted_idx])
-        print(np.array(randID)[sorted_idx])
-
         selected_ids = np.array(randID)[sorted_idx[:self.bs]].tolist()
         
         batch = []
@@ -292,62 +289,49 @@ class TripletLoader(object):
 
             return batch
 
-
     def get_test_smart_batch(self, version):
-
-        if mode == "train":
-            rand = np.random.randint(0, len(self.triplet_train), self.bs*self.oversample)
-        if mode == "test":
-            rand = np.random.randint(0, len(self.triplet_test), self.bs*self.oversample)
-        if mode == "all":
-            rand = np.random.randint(0, len(self.triplet_all), self.bs*self.oversample)
-
+        randID = np.random.randint(0, self.test_data.get_shape_length(), self.bs*self.oversample)
         pos_descriptions = []
-        for index in rand:
-            if mode == "train":
-                if len(self.triplet_train) > 0:
-                    pos_descriptions.append(self.triplet_train[index].pos_desc)
-            if mode == "test":
-                if len(self.triplet_test) > 0:
-                    pos_descriptions.append(self.triplet_test[index].pos_desc)
-            if mode == "all":
-                if len(self.triplet_list) > 0:
-                    pos_descriptions.append(self.triplet_list[index].pos_desc)
+
+        for i, index in enumerate(randID):
+            shape_id = self.test_data.shapes["modelId"][index]
+            pos_id = self.__find_positive_description_id(shape_id)
+            # in case of no matching positive description is found
+            # workaround for descriptions without shape
+            while pos_id == None:
+                temp = np.random.randint(0, self.test_data.get_shape_length())
+                shape_id = self.test_data.shapes["modelId"][temp]
+                pos_id = self.__find_positive_description_id(shape_id)
+                randID[i] = temp
+            pos_descriptions.append(self.test_data.descriptions["description"][pos_id])
 
         all_pos_desc = [item for sublist in pos_descriptions for item in sublist] # flattens list
-        all_pos_desc = list(filter(lambda a: a != 0, all_pos_desc))               # remove a;; zeros
+        all_pos_desc = list(filter(lambda a: a != 0, all_pos_desc))               # remove all zeros
         occurrences = collections.Counter(all_pos_desc)
 
         scores = []
         for description in pos_descriptions:
-            scores.append(self.comp_desc(pos_descriptions[0], description))
-        print(scores)
-
-        sorted_idx = np.argsort(scores)[::-1]
-        print(sorted_idx)
-        print(np.array(scores)[sorted_idx])
-
-        scores = []
-        for description in pos_descriptions:
             scores.append(self.comp_desc(pos_descriptions[0], description, occurrences))
-        print(scores)
-
-        sorted_idx = np.argsort(scores)[::-1]
-        print(sorted_idx)
-        print(np.array(scores)[sorted_idx])
-
+        
+        sorted_idx = np.argsort(scores)[::-1] # sort ascending order
+        selected_ids = np.array(randID)[sorted_idx[:self.bs]].tolist()
+        
         batch = []
-        for rand in sorted_idx[:self.bs]:
-            if mode == "train":
-                if len(self.triplet_train) > 0:
-                    batch.append(self.triplet_train[rand])
-            if mode == "test":
-                if len(self.triplet_test) > 0:
-                    batch.append(self.triplet_test[rand])
-            if mode == "all":
-                if len(self.triplet_list) > 0:
-                    batch.append(self.triplet_list[rand])
-        return batch
+        if version == "s2t":
+            for index in selected_ids:
+                shape = self.test_data.shapes['data'][index]
+                shape_id = self.test_data.shapes["modelId"][index]
+                pos_id = self.__find_positive_description_id(shape_id)
+                pos_desc = self.test_data.descriptions["description"][pos_id]
+
+                neg_id = self.__find_negative_desciption_id(shape_id, data="test")
+                neg_desc = self.test_data.descriptions["description"][neg_id]
+
+                triplet = TripletShape2Text(shape, pos_desc, neg_desc)
+                batch.append(triplet)
+
+            return batch
+
 
     def comp_desc(self, original, new, weights=None):
         intersection = set(original).intersection(new)

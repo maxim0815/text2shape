@@ -151,7 +151,7 @@ def main(config):
             print('EVAL: input {} of {} '.format(
                 i, number_of_batches), end='\r')
 
-            batch = dataloader.get_test_batch("s2t")
+            batch = dataloader.get_test_smart_batch("s2t")
             eval_dict = trip_enc.predict(batch)
             epoch_eval_dict["loss"] += eval_dict["loss"]
             epoch_eval_dict["accuracy"] += eval_dict["accuracy"]
