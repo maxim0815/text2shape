@@ -97,6 +97,7 @@ class TripletEncoder(object):
     def save_models(self):
         name = "shape_encoder.pt"
         file_name = os.path.join(self.save_directory, name)
+        # TODO: generate directory if it does not exist
         torch.save(self.shape_encoder.state_dict(), file_name)
         name = "text_encoder.pt"
         file_name = os.path.join(self.save_directory, name)
