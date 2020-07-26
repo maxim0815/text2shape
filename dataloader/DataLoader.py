@@ -200,18 +200,18 @@ class TripletLoader(object):
                 shape_id = self.train_data.shapes["modelId"][rand]
                 shape = self.train_data.shapes['data'][rand]
 
-                pos_id = self.__find_positive_description_id(shape_id)
+                pos_id = self.__find_positive_description_id(shape_id, data="train")
                 # in case of no matching positive description is found
                 while pos_id == None:
                     rand = np.random.randint(0, self.train_data.get_shape_length())
                     shape_id = self.train_data.shapes["modelId"][rand]
                     shape = self.train_data.shapes['data'][rand]
 
-                    pos_id = self.__find_positive_description_id(shape_id)
+                    pos_id = self.__find_positive_description_id(shape_id, data="train")
                 
                 pos_desc = self.train_data.descriptions["description"][pos_id]
 
-                neg_id = self.__find_negative_desciption_id(shape_id)
+                neg_id = self.__find_negative_desciption_id(shape_id, data="train")
                 neg_desc = self.train_data.descriptions["description"][neg_id]
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
@@ -252,13 +252,13 @@ class TripletLoader(object):
 
         for i, index in enumerate(randID):
             shape_id = self.train_data.shapes["modelId"][index]
-            pos_id = self.__find_positive_description_id(shape_id)
+            pos_id = self.__find_positive_description_id(shape_id, data="train")
             # in case of no matching positive description is found
             # workaround for descriptions without shape
             while pos_id == None:
                 temp = np.random.randint(0, self.train_data.get_shape_length())
                 shape_id = self.train_data.shapes["modelId"][temp]
-                pos_id = self.__find_positive_description_id(shape_id)
+                pos_id = self.__find_positive_description_id(shape_id, data="train")
                 randID[i] = temp
             pos_descriptions.append(self.train_data.descriptions["description"][pos_id])
 
@@ -278,7 +278,7 @@ class TripletLoader(object):
             for index in selected_ids:
                 shape = self.train_data.shapes['data'][index]
                 shape_id = self.train_data.shapes["modelId"][index]
-                pos_id = self.__find_positive_description_id(shape_id)
+                pos_id = self.__find_positive_description_id(shape_id, data="train")
                 pos_desc = self.train_data.descriptions["description"][pos_id]
 
                 neg_id = self.__find_negative_id(shape_id, data="train")
@@ -293,7 +293,7 @@ class TripletLoader(object):
             for index in selected_ids:
                 pos_shape = self.train_data.shapes['data'][index]
                 shape_id = self.train_data.shapes["modelId"][index]
-                pos_id = self.__find_positive_description_id(shape_id)
+                pos_id = self.__find_positive_description_id(shape_id, data="train")
                 desc = self.train_data.descriptions["description"][pos_id]
 
                 neg_id = self.__find_negative_id(shape_id, data="train")
@@ -310,13 +310,13 @@ class TripletLoader(object):
 
         for i, index in enumerate(randID):
             shape_id = self.test_data.shapes["modelId"][index]
-            pos_id = self.__find_positive_description_id(shape_id)
+            pos_id = self.__find_positive_description_id(shape_id, data="test")
             # in case of no matching positive description is found
             # workaround for descriptions without shape
             while pos_id == None:
                 temp = np.random.randint(0, self.test_data.get_shape_length())
                 shape_id = self.test_data.shapes["modelId"][temp]
-                pos_id = self.__find_positive_description_id(shape_id)
+                pos_id = self.__find_positive_description_id(shape_id, data="test")
                 randID[i] = temp
             pos_descriptions.append(self.test_data.descriptions["description"][pos_id])
 
@@ -375,7 +375,7 @@ class TripletLoader(object):
             return weighted_matches
         
 
-    def __find_positive_description_id(self, shape_id, data="train"):
+    def __find_positive_description_id(self, shape_id, data):
         """
         return random matching idx of all desciptions
         """
@@ -397,7 +397,7 @@ class TripletLoader(object):
             return matching_idx[rand]
 
     # only gets random negative, TODO get from selected batch?
-    def __find_negative_id(self, shape_id, data="train"):
+    def __find_negative_id(self, shape_id, data):
         if data == "train":
             max_val = len(self.train_data.descriptions["modelId"])
             rand = np.random.randint(0, max_val)
