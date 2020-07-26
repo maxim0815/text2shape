@@ -336,7 +336,7 @@ class TripletLoader(object):
             for index in selected_ids:
                 shape = self.test_data.shapes['data'][index]
                 shape_id = self.test_data.shapes["modelId"][index]
-                pos_id = self.__find_positive_description_id(shape_id, data="testS")
+                pos_id = self.__find_positive_description_id(shape_id, data="test")
                 pos_desc = self.test_data.descriptions["description"][pos_id]
 
                 neg_id = self.__find_negative_id(shape_id, data="test")
