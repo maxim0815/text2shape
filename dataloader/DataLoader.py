@@ -281,10 +281,25 @@ class TripletLoader(object):
                 pos_id = self.__find_positive_description_id(shape_id)
                 pos_desc = self.train_data.descriptions["description"][pos_id]
 
-                neg_id = self.__find_negative_desciption_id(shape_id, data="test")
+                neg_id = self.__find_negative_id(shape_id, data="train")
                 neg_desc = self.train_data.descriptions["description"][neg_id]
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
+                batch.append(triplet)
+
+            return batch
+
+        if version == "t2s":
+            for index in selected_ids:
+                pos_shape = self.train_data.shapes['data'][index]
+                shape_id = self.train_data.shapes["modelId"][index]
+                pos_id = self.__find_positive_description_id(shape_id)
+                desc = self.train_data.descriptions["description"][pos_id]
+
+                neg_id = self.__find_negative_id(shape_id, data="train")
+                neg_shape = self.train_data.shapes['data'][neg_id]
+
+                triplet = TripletShape2Text(desc, pos_shape, neg_shape)
                 batch.append(triplet)
 
             return batch
@@ -324,10 +339,25 @@ class TripletLoader(object):
                 pos_id = self.__find_positive_description_id(shape_id)
                 pos_desc = self.test_data.descriptions["description"][pos_id]
 
-                neg_id = self.__find_negative_desciption_id(shape_id, data="test")
+                neg_id = self.__find_negative_id(shape_id, data="test")
                 neg_desc = self.test_data.descriptions["description"][neg_id]
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
+                batch.append(triplet)
+
+            return batch
+
+        if version == "t2s":
+            for index in selected_ids:
+                pos_shape = self.test_data.shapes['data'][index]
+                shape_id = self.test_data.shapes["modelId"][index]
+                pos_id = self.__find_positive_description_id(shape_id)
+                desc = self.test_data.descriptions["description"][pos_id]
+
+                neg_id = self.__find_negative_id(shape_id, data="test")
+                neg_shape = self.test_data.shapes['data'][neg_id]
+
+                triplet = TripletShape2Text(desc, pos_shape, neg_shape)
                 batch.append(triplet)
 
             return batch
@@ -366,7 +396,8 @@ class TripletLoader(object):
             rand = np.random.randint(0, len(matching_idx))
             return matching_idx[rand]
 
-    def __find_negative_desciption_id(self, shape_id, data="train"):
+    # only gets random negative, TODO get from selected batch?
+    def __find_negative_id(self, shape_id, data="train"):
         if data == "train":
             max_val = len(self.train_data.descriptions["modelId"])
             rand = np.random.randint(0, max_val)
