@@ -91,7 +91,7 @@ def better_ndcg_scores(ndcg_scores, best_ndcg_scores):
         else:
             False
     if len(ndcg_scores) > 1:
-        if len(larger_ndcg_scores) >= len(ndcg_scores)-1:
+        if len(larger_ndcg_scores) >= len(ndcg_scores):
             return True
         else:
             False
@@ -169,9 +169,12 @@ def main(config):
         tensorboard_eval.write_episode_data(ep, eval_dict)
 
         # check if ndcg scores are better than before
+        # all metrices musst be better than best one before
 
         if better_ndcg_scores(ndcg_scores, best_ndcg_scores):
-            best_ndcg_scores = ndcg_scores
+            for key, _ in ndcg_scores.items():
+                if ndcg_scores[key] >= best_ndcg_scores[key]:
+                    best_ndcg_scores[key] = ndcg_scores[key]
             print("...new best eval ndcg score(s) --> saving models")
             trip_enc.save_models()
 
