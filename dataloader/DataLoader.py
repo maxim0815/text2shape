@@ -76,7 +76,7 @@ class Loader(object):
                     break
             if found_category == True:
                 cat = self.descriptions['category'][key]
-                category.append(cat)
+            category.append(cat)
         self.shapes['category'] = category
 
     def __description_to_lists(self):

@@ -119,10 +119,10 @@ def find_nn_text_2_shape(text_model, shape_model,  input_, loader, k):
     return closest_idx, closest_dist
 
 
-def calculate_ndcg(idx_neighbor, idx_input, dataloader, n_neighbors, metric):
+def calculate_ndcg(idx_neighbor, id_input, dataloader, n_neighbors, metric):
     """
     idx_neighbor:       indicies of all nearest  neighbors
-    idx_input:          index of what we computed the nearest neighbors to
+    id_input:           index of what we computed the nearest neighbors to
     dataloade:          backend holding all data
     n_neighbors:        number of calculated neighbors == len(idx_neighbor)
     metric:             t2t - t2s - s2t - s2s
@@ -133,25 +133,25 @@ def calculate_ndcg(idx_neighbor, idx_input, dataloader, n_neighbors, metric):
     rel_score_ideal = np.ones((n_neighbors))
 
     if metric == "t2t":
-        true_label = dataloader.descriptions['category'][idx_input]
+        true_label = dataloader.descriptions['category'][id_input]
         for i, id in enumerate(idx_neighbor):
             label = dataloader.descriptions['category'][id]
             rel_score[i] = np.asarray(label == true_label)
     
     if metric == "t2s":
-        true_label = dataloader.descriptions['category'][idx_input]
+        true_label = dataloader.descriptions['category'][id_input]
         for i, id in enumerate(idx_neighbor):
             label = dataloader.shapes['category'][id]
             rel_score[i] = np.asarray(label == true_label)
 
     if metric == "s2t":
-        true_label = dataloader.shapes['category'][idx_input]
+        true_label = dataloader.shapes['category'][id_input]
         for i, id in enumerate(idx_neighbor):
             label = dataloader.descriptions['category'][id]
             rel_score[i] = np.asarray(label == true_label)
     
     if metric == "s2s":
-        true_label = dataloader.shapes['category'][idx_input]
+        true_label = dataloader.shapes['category'][id_input]
         for i, id in enumerate(idx_neighbor):
             label = dataloader.shapes['category'][id]
             rel_score[i] = np.asarray(label == true_label)
