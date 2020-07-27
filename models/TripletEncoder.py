@@ -3,7 +3,7 @@ import os
 import sys
 
 from models.Networks import ShapeEncoder, TextEncoder
-
+from dataloader.DataLoader import TripletText2Shape, TripletShape2Text
 from utils.Losses import triplet_loss
 
 
@@ -38,28 +38,33 @@ class TripletEncoder(object):
         so far:
             batch is list of class Triplet
         '''
-        shape_batch, pos_desc_batch, neg_desc_batch = self.triplet_list_to_tensor(
-            batch)
-
         self.shape_encoder.train()
         self.text_encoder.train()
 
-        # set requires_grad to true
-        shape_batch.requires_grad_()
+        if isinstance(batch[0], TripletShape2Text):
+            shape_batch, pos_desc_batch, neg_desc_batch = self.triplet_list_to_tensor(
+                batch)
+            # set requires_grad to true
+            shape_batch.requires_grad_()
+            pos = self.text_encoder(pos_desc_batch)
+            neg = self.text_encoder(neg_desc_batch)
+            anchor = self.shape_encoder(shape_batch)
 
-        pos_out = self.text_encoder(pos_desc_batch)
-        neg_out = self.text_encoder(neg_desc_batch)
-        shape_out = self.shape_encoder(shape_batch)
+        if isinstance(batch[0], TripletText2Shape):
+            desc_batch, pos_shape_batch, neg_shape_batch = self.triplet_list_to_tensor(
+                batch)
+            pos = self.shape_encoder(pos_shape_batch)
+            neg = self.shape_encoder(neg_shape_batch)
+            anchor = self.text_encoder(desc_batch)
 
         # calculate triplet loss
+        loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
 
-        loss, dist_pos, dist_neg = triplet_loss(shape_out, pos_out, neg_out)
-
-        #accuray
+        # accuray
         pred = (dist_pos - dist_neg).cpu().data
-        acc = (pred > 0).sum()*1.0/dist_pos.size()[0] 
+        acc = (pred > 0).sum()*1.0/dist_pos.size()[0]
 
-        eval_dict = {"loss" : loss.item(), "accuracy" : acc}
+        eval_dict = {"loss": loss.item(), "accuracy": acc}
 
         self.optimizer_shape.zero_grad()
         self.optimizer_text.zero_grad()
@@ -88,9 +93,9 @@ class TripletEncoder(object):
         loss, dist_pos, dist_neg = triplet_loss(shape_out, pos_out, neg_out)
 
         pred = (dist_pos - dist_neg).cpu().data
-        acc = (pred > 0).sum()*1.0/dist_pos.size()[0] 
+        acc = (pred > 0).sum()*1.0/dist_pos.size()[0]
 
-        eval_dict = {"loss" : loss.item(), "accuracy" : acc}
+        eval_dict = {"loss": loss.item(), "accuracy": acc}
 
         return eval_dict
 
@@ -123,18 +128,36 @@ class TripletEncoder(object):
         '''
         triplet list get seperatet into tree tensors
         '''
-        bs = len(batch)
-        max_length = 96
-        pos_desc_batch = torch.zeros((bs, max_length)).long()
-        neg_desc_batch = torch.zeros((bs, max_length)).long()
-        shape_batch = torch.zeros((bs, 32, 32, 32, 4))
-        for i, triplet in enumerate(batch):
-            pos_desc_batch[i] = torch.from_numpy(triplet.pos_desc).long()
-            neg_desc_batch[i] = torch.from_numpy(triplet.neg_desc).long()
-            shape_batch[i] = torch.from_numpy(triplet.shape)
+        if isinstance(batch[0], TripletShape2Text):
+            bs = len(batch)
+            max_length = 96
+            pos_desc_batch = torch.zeros((bs, max_length)).long()
+            neg_desc_batch = torch.zeros((bs, max_length)).long()
+            shape_batch = torch.zeros((bs, 32, 32, 32, 4))
+            for i, triplet in enumerate(batch):
+                pos_desc_batch[i] = torch.from_numpy(triplet.pos_desc).long()
+                neg_desc_batch[i] = torch.from_numpy(triplet.neg_desc).long()
+                shape_batch[i] = torch.from_numpy(triplet.shape)
 
-        shape_batch = shape_batch.to(self.device)
-        pos_desc_batch = pos_desc_batch.to(self.device)
-        neg_desc_batch = neg_desc_batch.to(self.device)
+            shape_batch = shape_batch.to(self.device)
+            pos_desc_batch = pos_desc_batch.to(self.device)
+            neg_desc_batch = neg_desc_batch.to(self.device)
 
-        return shape_batch, pos_desc_batch, neg_desc_batch
+            return shape_batch, pos_desc_batch, neg_desc_batch
+        
+        if isinstance(batch[0], TripletText2Shape):
+            bs = len(batch)
+            max_length = 96
+            pos_shape_batch = torch.zeros((bs, 32, 32, 32, 4))
+            neg_shape_batch = torch.zeros((bs, 32, 32, 32, 4))
+            desc_batch = torch.zeros((bs, max_length)).long()
+            for i, triplet in enumerate(batch):
+                pos_shape_batch[i] = torch.from_numpy(triplet.pos_shape)
+                neg_shape_batch[i] = torch.from_numpy(triplet.neg_shape)
+                desc_batch[i] = torch.from_numpy(triplet.desc)
+            
+            pos_shape_batch = pos_shape_batch.to(self.device)
+            neg_shape_batch = neg_shape_batch.to(self.device)
+            desc_batch = desc_batch.to(self.device)
+
+            return desc_batch, pos_shape_batch, neg_shape_batch

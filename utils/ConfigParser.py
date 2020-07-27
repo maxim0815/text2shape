@@ -21,6 +21,8 @@ def config_parser(config_file, print_config=True):
 		raise Exception("Check config file - No name within config file")
 	if 'hyper_parameters' not in cfg:
 		raise Exception("Check config file - No hyper parameters within config file")
+	if 'triplet' not in cfg:
+		raise Exception("Check config file - No triplet within config file")
 	if 'metric' not in cfg:
 		raise Exception("Check config file - No metric within config file")
 	if len(cfg['metric']) > 4:
