@@ -249,7 +249,7 @@ class TripletLoader(object):
                     desc_id = self.train_data.descriptions['modelId'][rand]
                     desc = self.train_data.descriptions["description"][rand]
 
-                    pos_id = self.__find_positive_shape_id(desc_id, data="train)
+                    pos_id = self.__find_positive_shape_id(desc_id, data="train")
 
                 pos_shape = self.train_data.shapes['data'][pos_id]
 
@@ -515,7 +515,7 @@ class TripletLoader(object):
         """
         return  matching idx of close descriptions
         """
-        
+
         if data == "train":
             rand = np.random.randint(0, self.bs)
             index = self.selected_ids[rand]

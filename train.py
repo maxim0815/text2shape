@@ -138,7 +138,11 @@ def main(config):
 
             version = random.choice(triplet_versions)
 
-            batch = dataloader.get_train_batch(version)
+            if config['generate_batch'] == "random":
+                batch = dataloader.get_train_batch(version)
+            if config['generate_batch'] == "smart":
+                batch = dataloader.get_train_smart_batch(version)
+    
             train_dict = trip_enc.update(batch)
             epoch_train_dict["loss"] += train_dict["loss"]
             epoch_train_dict["accuracy"] += train_dict["accuracy"]
@@ -155,7 +159,12 @@ def main(config):
             print('EVAL: input {} of {} '.format(
                 i, number_of_batches), end='\r')
             
-            batch = dataloader.get_test_batch("s2t")
+            version = random.choice(triplet_versions)
+            if config['generate_batch'] == "random":
+                batch = dataloader.get_test_batch(version)
+            if config['generate_batch'] == "smart":
+                batch = dataloader.get_test_smart_batch(version)
+
             eval_dict = trip_enc.predict(batch)
             epoch_eval_dict["loss"] += eval_dict["loss"]
             epoch_eval_dict["accuracy"] += eval_dict["accuracy"]
