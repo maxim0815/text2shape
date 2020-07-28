@@ -5,6 +5,7 @@ hyper_parameters:
   mom: 0.9
   wd: 0.0001
   ep: 100
+  oversample: 3
 triplet: ["s2t", "t2s"]     # what kind of triplet should be used for training/evaluation
 metric: ["s2t", "t2s"]      # evaluation metrices
 nns: 20                     # numer of nearest neighbors for evaluation metric

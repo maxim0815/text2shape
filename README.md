@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bf077e8ef1c64c1da2a5f4e804f86b62)](https://app.codacy.com/manual/maxim0815/text2shape?utm_source=github.com&utm_medium=referral&utm_content=maxim0815/text2shape&utm_campaign=Badge_Grade_Dashboard)
 [![Build Status](https://travis-ci.org/maxim0815/text2shape.svg?branch=master)](https://travis-ci.org/maxim0815/text2shape)
 
 # text2shape
