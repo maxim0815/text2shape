@@ -74,7 +74,8 @@ def config_parser(config_file, print_config=True):
         raise Exception("Check config file - model_save dir not given")
     if 'tensorboard' not in dir_:
         raise Exception("Check config file - tensorboard dir not given")
-
+    
+    def print_symbol():
     if print_config:
         pretty_config_print(cfg)
 
