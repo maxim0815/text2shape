@@ -290,7 +290,36 @@ class TripletLoader(object):
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
 
                 batch.append(triplet)
-        return batch
+            return batch
+
+        if version == "t2s":
+            for _ in range(self.bs):
+                rand = np.random.randint(0, self.test_data.get_description_length())
+                desc_id = self.test_data.descriptions["modelId"][rand]
+                desc = self.test_data.descriptions['description'][rand]
+
+                pos_id = self.__find_positive_shape_id(
+                    desc_id, data="test")
+                # in case of no matching positive description is found
+                while pos_id == None:
+                    rand = np.random.randint(
+                        0, self.test_data.get_description_length())
+                    desc_id = self.test_data.descriptions["modelId"][rand]
+                    desc = self.test_data.descriptions['data'][rand]
+
+                    pos_id = self.__find_positive_shape_id(
+                        desc_id, data="test")
+
+                pos_shape = self.test_data.shapes["data"][pos_id]
+
+                neg_id = self.__find_negative_shape_id(
+                    desc_id, data="test")
+                neg_shape = self.test_data.shapes["data"][neg_id]
+
+                triplet = TripletText2Shape(desc, pos_shape, neg_shape)
+
+                batch.append(triplet)
+            return batch
 
     def __find_positive_description_id(self, shape_id, data):
         """
@@ -426,7 +455,7 @@ class TripletLoader(object):
                     shape_id, data="train")
                 neg_shape = self.train_data.shapes['data'][neg_id]
 
-                triplet = TripletShape2Text(desc, pos_shape, neg_shape)
+                triplet = TripletText2Shape(desc, pos_shape, neg_shape)
                 batch.append(triplet)
 
             return batch
@@ -495,7 +524,7 @@ class TripletLoader(object):
                     shape_id, data="test")
                 neg_shape = self.test_data.shapes['data'][neg_id]
 
-                triplet = TripletShape2Text(desc, pos_shape, neg_shape)
+                triplet = TripletText2Shape(desc, pos_shape, neg_shape)
                 batch.append(triplet)
 
             return batch

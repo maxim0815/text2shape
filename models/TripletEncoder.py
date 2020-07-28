@@ -79,18 +79,26 @@ class TripletEncoder(object):
 
     def predict(self, batch):
 
-        shape_batch, pos_desc_batch, neg_desc_batch = self.triplet_list_to_tensor(
-            batch)
-
         self.shape_encoder.eval()
         self.text_encoder.eval()
 
-        pos_out = self.text_encoder(pos_desc_batch)
-        neg_out = self.text_encoder(neg_desc_batch)
-        shape_out = self.shape_encoder(shape_batch)
+        if isinstance(batch[0], TripletShape2Text):
+            shape_batch, pos_desc_batch, neg_desc_batch = self.triplet_list_to_tensor(
+                batch)
+
+            pos = self.text_encoder(pos_desc_batch)
+            neg = self.text_encoder(neg_desc_batch)
+            anchor = self.shape_encoder(shape_batch)
+        
+        if isinstance(batch[0], TripletText2Shape):
+            desc_batch, pos_shape_batch, neg_shape_batch = self.triplet_list_to_tensor(
+                batch)
+            pos = self.shape_encoder(pos_shape_batch)
+            neg = self.shape_encoder(neg_shape_batch)
+            anchor = self.text_encoder(desc_batch)
 
         # calculate triplet loss
-        loss, dist_pos, dist_neg = triplet_loss(shape_out, pos_out, neg_out)
+        loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
 
         pred = (dist_pos - dist_neg).cpu().data
         acc = (pred > 0).sum()*1.0/dist_pos.size()[0]
