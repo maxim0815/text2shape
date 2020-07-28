@@ -39,28 +39,27 @@ ___
 *   preprocessing description (each word/symbol is seperated by space)
 *   vocabulary gets filled with words that appear more than twice
 
-```python
-python3 preprocessing/run_preprocessing.py data/captions.tablechair.csv data/full_preprocessed.captions.csv data/full_voc.csv
-```
+  ```python
+  python3 preprocessing/run_preprocessing.py data/captions.tablechair.csv data/full_preprocessed.captions.csv data/full_voc.csv
+  ```
 
 ### Learning embeddings
 
 *   set configuration in config/cfg.yaml
 
-```python
-python3 train.py config/cfg.yaml
-```
-
+  ```python
+  python3 train.py config/cfg.yaml
+  ```
 
 ### Retrievals
 
 *   define which retrievals and further configs within config/cfg_retrieval.yaml
 *   possibile retrievals:
-  *   text 2 text   (t2t)
-  *   text 2 shape  (t2s)
-  *   shape 2 text  (s2t)
-  *   shape 2 shape (s2s)
+  * text 2 text   (t2t)
+  * text 2 shape  (t2s)
+  * shape 2 text  (s2t)
+  * shape 2 shape (s2s)
 
-```python
-python3 retrieval.py config/cfg_retrieval.yaml
-```
+  ```python
+  python3 retrieval.py config/cfg_retrieval.yaml
+  ```
