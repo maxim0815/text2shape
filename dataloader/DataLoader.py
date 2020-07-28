@@ -77,7 +77,7 @@ class Loader(object):
                     break
             if found_category == True:
                 cat = self.descriptions['category'][key]
-                category.append(cat)
+            category.append(cat)
         self.shapes['category'] = category
 
     def __description_to_lists(self):
@@ -281,7 +281,7 @@ class TripletLoader(object):
                 pos_id = self.__find_positive_description_id(shape_id, data="train")
                 pos_desc = self.train_data.descriptions["description"][pos_id]
 
-                neg_id = self.__find_negative_id(shape_id, data="train")
+                neg_id = self.__find_negative_description_id(shape_id, data="train")
                 neg_desc = self.train_data.descriptions["description"][neg_id]
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
@@ -296,7 +296,7 @@ class TripletLoader(object):
                 pos_id = self.__find_positive_description_id(shape_id, data="train")
                 desc = self.train_data.descriptions["description"][pos_id]
 
-                neg_id = self.__find_negative_id(shape_id, data="train")
+                neg_id = self.__find_negative_shape_id(shape_id, data="train")
                 neg_shape = self.train_data.shapes['data'][neg_id]
 
                 triplet = TripletShape2Text(desc, pos_shape, neg_shape)
@@ -339,7 +339,7 @@ class TripletLoader(object):
                 pos_id = self.__find_positive_description_id(shape_id, data="test")
                 pos_desc = self.test_data.descriptions["description"][pos_id]
 
-                neg_id = self.__find_negative_id(shape_id, data="test")
+                neg_id = self.__find_negative_description_id(shape_id, data="test")
                 neg_desc = self.test_data.descriptions["description"][neg_id]
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
@@ -354,7 +354,7 @@ class TripletLoader(object):
                 pos_id = self.__find_positive_description_id(shape_id, data="test")
                 desc = self.test_data.descriptions["description"][pos_id]
 
-                neg_id = self.__find_negative_id(shape_id, data="test")
+                neg_id = self.__find_negative_shape_id(shape_id, data="test")
                 neg_shape = self.test_data.shapes['data'][neg_id]
 
                 triplet = TripletShape2Text(desc, pos_shape, neg_shape)
@@ -396,8 +396,7 @@ class TripletLoader(object):
             rand = np.random.randint(0, len(matching_idx))
             return matching_idx[rand]
 
-    # only gets random negative, TODO get from selected batch?
-    def __find_negative_id(self, shape_id, data):
+    def __find_negative_description_id(self, shape_id, data):
         if data == "train":
             max_val = len(self.train_data.descriptions["modelId"])
             rand = np.random.randint(0, max_val)
@@ -408,6 +407,21 @@ class TripletLoader(object):
             max_val = len(self.test_data.descriptions["modelId"])
             rand = np.random.randint(0, max_val)
             while self.test_data.descriptions["modelId"][rand] == shape_id:
+                rand = np.random.randint(0, max_val)
+            return rand
+
+    # only gets random negative, TODO get from selected batch?
+    def __find_negative_shape_id(self, shape_id, data):
+        if data == "train":
+            max_val = len(self.train_data.shapes["modelId"])
+            rand = np.random.randint(0, max_val)
+            while self.train_data.shapes["modelId"][rand] == shape_id:
+                rand = np.random.randint(0, max_val)
+            return rand
+        if data == "test":
+            max_val = len(self.test_data.shapes["modelId"])
+            rand = np.random.randint(0, max_val)
+            while self.test_data.shapes["modelId"][rand] == shape_id:
                 rand = np.random.randint(0, max_val)
             return rand
 
