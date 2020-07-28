@@ -127,6 +127,7 @@ def main(config):
         print("...starting with epoch {} of {}".format(ep, epochs))
 
         # TRAIN
+        print(dataloader.train_data.get_shape_length())
         number_of_batches = int(
             dataloader.train_data.get_shape_length()/dataloader.bs)
         epoch_train_dict = eval_dict = {"loss": 0.0, "accuracy": 0.0}

@@ -1,7 +1,7 @@
 name: "embeddings"
 hyper_parameters:
   lr: 0.001
-  bs: 4
+  bs: 64
   mom: 0.9
   wd: 0.0001
   ep: 100
