@@ -6,6 +6,8 @@ hyper_parameters:
   wd: 0.0001
   ep: 100
   oversample: 3
+generate_batch: "random"    # use random or smart batch
+triplet: ["s2t", "t2s"]     # what kind of triplet should be used for training/evaluation
 metric: ["s2t", "t2s"]      # evaluation metrices
 nns: 20                     # numer of nearest neighbors for evaluation metric
 directories:
@@ -14,5 +16,5 @@ directories:
   vocabulary: "data/full_voc.csv"
   text_model_load: "output/"
   shape_model_load: "output/"
-  model_save: "results/"
+  model_save: "results/test/"
   tensorboard: "tensorboard/"

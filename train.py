@@ -2,6 +2,7 @@ import argparse
 
 import nrrd
 import torch
+import random
 
 import numpy as np
 
@@ -120,6 +121,7 @@ def main(config):
     trip_enc = TripletEncoder(config, dataloader.length_voc)
 
     epochs = config['hyper_parameters']['ep']
+    triplet_versions = config['triplet']
 
     print("...starting training")
 
@@ -134,7 +136,13 @@ def main(config):
             print('TRAIN: input {} of {} '.format(
                 i, number_of_batches), end='\r')
 
-            batch = dataloader.get_train_smart_batch("s2t")
+            version = random.choice(triplet_versions)
+
+            if config['generate_batch'] == "random":
+                batch = dataloader.get_train_batch(version)
+            if config['generate_batch'] == "smart":
+                batch = dataloader.get_train_smart_batch(version)
+    
             train_dict = trip_enc.update(batch)
             epoch_train_dict["loss"] += train_dict["loss"]
             epoch_train_dict["accuracy"] += train_dict["accuracy"]
@@ -150,8 +158,13 @@ def main(config):
         for i in range(number_of_batches):
             print('EVAL: input {} of {} '.format(
                 i, number_of_batches), end='\r')
+            
+            version = random.choice(triplet_versions)
+            if config['generate_batch'] == "random":
+                batch = dataloader.get_test_batch(version)
+            if config['generate_batch'] == "smart":
+                batch = dataloader.get_test_smart_batch(version)
 
-            batch = dataloader.get_test_smart_batch("s2t")
             eval_dict = trip_enc.predict(batch)
             epoch_eval_dict["loss"] += eval_dict["loss"]
             epoch_eval_dict["accuracy"] += eval_dict["accuracy"]
