@@ -665,6 +665,9 @@ def parse_primitives(path):
     """
     generates needed form for training from
     all files given in primitives directory
+    each folder contains:
+        10 shapes
+        between 20 and a few hunded descriptions
     """
 
     shapes = dict()
@@ -677,24 +680,35 @@ def parse_primitives(path):
     descriptions['category'] = []
 
     for root, _, files in os.walk(path):
+        # used later to share descriptions between shapes
+        name_list = []
+        cat_list = []
+        desc_list = []
         for file in files:
-            name = root.replace(path, '')
-            splitted = name.split("-")
-            category = splitted[0] + " " + splitted[1]
             if file.endswith(".nrrd"):
+                name = file.replace(".nrrd", '')
+                name_list.append(name)
+                splitted = name.split("-")
+                category = splitted[0] + " " + splitted[1]
+                cat_list.append(category)
                 train_data, _ = nrrd.read(
                     os.path.join(root, file), index_order='C')
                 shapes['modelId'].append(name)
                 shapes['data'].append(train_data)
                 shapes['category'].append(category)
+
             if file.endswith(".txt"):
                 # either too stupid or pandas suchs in this case
                 with open(os.path.join(root, file), newline='') as f:
                     reader = csv.reader(f)
                     desc_list = list(reader)
-                for desc in desc_list:
-                    descriptions['modelId'].append(name)
-                    descriptions['description'].append(desc[0])
-                    descriptions['category'].append(category)
+        
+        # share the descriptions across shapes
+        if len(desc_list) != 0:
+            for desc in desc_list:
+                choice = np.random.randint(0, len(name_list))
+                descriptions['modelId'].append(name_list[choice])
+                descriptions['description'].append(desc[0])
+                descriptions['category'].append(cat_list[choice])
 
     return shapes, descriptions
