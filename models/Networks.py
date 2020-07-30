@@ -2,28 +2,29 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch
 
+
 class ShapeEncoder(nn.Module):
     """
     Network for shape encoder
     Conv3d --> 	[batch_size, in_channels (RGB+alpha), depth, height, width]
                 [bs, 4, 32, 32, 32]
     """
+
     def __init__(self):
         super(ShapeEncoder, self).__init__()
-        self.conv1 = nn.Sequential(nn.Conv3d(4, 64,kernel_size=3, stride=2),
+        self.conv1 = nn.Sequential(nn.Conv3d(4, 64, kernel_size=3, stride=2),
                                    nn.BatchNorm3d(64))
-        self.conv2 = nn.Sequential(nn.Conv3d(64, 128,kernel_size=3, stride=2),
+        self.conv2 = nn.Sequential(nn.Conv3d(64, 128, kernel_size=3, stride=2),
                                    nn.BatchNorm3d(128))
-        self.conv3 = nn.Sequential(nn.Conv3d(128, 256,kernel_size=3, stride=2),
+        self.conv3 = nn.Sequential(nn.Conv3d(128, 256, kernel_size=3, stride=2),
                                    nn.BatchNorm3d(256))
         self.pool = nn.MaxPool3d((2, 2, 2))
         self.fc = nn.Linear(256, 128)
 
-
     def forward(self, x):
         # bring shape [bs, depth, height, widt, rgb+a]
         # to shape [bs, rgb+a, depth, height, width]
-        
+
         x = x.permute(0, 4, 1, 2, 3)
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
@@ -34,25 +35,28 @@ class ShapeEncoder(nn.Module):
         # TODO: do we want to add softmax in forward pass
         return x
 
+
 class TextEncoder(nn.Module):
+    """
+    Network for shape encoder
+    Conv1d -->  [batch_size, in_channels, signal_length]
+                [bs, embeddings, 96]
+
+    formula: [(W−K+2P)/S]+1
+        W = input
+        K = kernel
+        P = padding
+        S = stride
+    """
+
     def __init__(self, vocabulary_size):
         super(TextEncoder, self).__init__()
-        """
-        Network for shape encoder
-        Conv1d -->  [batch_size, in_channels, signal_length]
-                    [bs, embeddings, 96]
-        
-        formula: [(W−K+2P)/S]+1
-            W = input
-            K = kernel
-            P = padding
-            S = stride
-        """
+
         self.emb = nn.Embedding(vocabulary_size, 128)
         # define layers of a convolutional neural network
         self.conv1 = nn.Conv1d(128, 128, kernel_size=3, stride=1, padding=1)
         self.conv2 = nn.Sequential(nn.Conv1d(128, 128, 3, stride=1, padding=1),
-                                   nn.BatchNorm1d(128),)
+                                   nn.BatchNorm1d(128))
         self.conv3 = nn.Conv1d(128, 256, 3, stride=1, padding=1)
         self.conv4 = nn.Sequential(nn.Conv1d(256, 256, 3, stride=1, padding=1),
                                    nn.BatchNorm1d(256))
@@ -89,21 +93,105 @@ class TextEncoder(nn.Module):
         """
         batch:          [bs, seq]
         des_length:     size of bs containing the length of
-                        each description in batch 
+                        each description in batch
         """
+
         des_length = torch.gt(batch, 0).sum(dim=1).long()
         return des_length
 
     def extract_relevant(self, out, des_length):
-        #TODO: not quite sure what happens here 
+        # TODO: not quite sure what happens here
         # combination of orignal repo and
         # https://github.com/eriche2016/text2shape.pytorch/blob/master/models/lba_models.py
-        
+
         bs = out.shape[1]
         max_length = out.shape[0]
         out_size = int(out.shape[2])
 
-        masks = (des_length-1).unsqueeze(0).unsqueeze(2).expand(max_length, bs, out_size)
+        masks = (
+            des_length-1).unsqueeze(0).unsqueeze(2).expand(max_length, bs, out_size)
         relevant = out.gather(0, masks)[0]
 
         return relevant
+
+
+class T2SGenerator(nn.Module):
+    """
+    Network for Generator
+    upsampling from text encoder to some shape
+    """
+
+    def __init__(self):
+        """
+        32768 = [_, 512, 4, 4, 4]
+        """
+
+        super(T2SGenerator, self).__init__()
+
+        self.fc1 = nn.Sequential(nn.Linear(128, 32768), nn.BatchNorm1d(32768))
+        self.conv2 = nn.Sequential(nn.Conv3d(512, 512, 4, stride=1, padding=2),
+                                   nn.BatchNorm3d(512))
+        self.conv3 = nn.Sequential(nn.Conv3d(512, 256, 4, stride=2, padding=3),
+                                   nn.BatchNorm3d(256))
+        self.conv4 = nn.Sequential(nn.Conv3d(256, 128, 4, stride=2, padding=3),
+                                   nn.BatchNorm3d(128))
+        self.conv5 = nn.Conv3d(128, 4, 4, stride=2, padding=3)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+
+        # bring x into right shape
+        bs = x.shape[0]
+        x = x.reshape([bs, 512, 4, 4, 4])
+
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.conv4(x))
+        x = self.conv5(x)
+
+        return F.sigmoid(x)
+
+
+class T2SDiscriminator(nn.Module):
+    """
+    Network for Discriminator
+    checks if generator sets true or fake shapes
+    """
+
+    def __init__(self):
+        super(T2SDiscriminator, self).__init__()
+
+        self.conv1 = nn.Conv3d(4, 64, 4, stride=2)
+        self.conv2 = nn.Conv3d(64, 128, 4, stride=2)
+        self.conv3 = nn.Conv3d(128, 256, 4, stride=2)
+        self.conv4 = nn.Conv3d(256, 512, 4, stride=2)
+        self.conv5 = nn.Conv3d(512, 256, 2, stride=2)
+
+        self.fc1_emb = nn.Sequential(nn.Linear(128, 256),
+                                     nn.BatchNorm1d(256))
+        self.fc1_emb = nn.Sequential(nn.Linear(256, 256),
+                                     nn.BatchNorm1d(256))
+
+        self.fc1 = nn.Linear(256, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 1)
+
+    def forward(self, x, emb):
+        x = F.leaky_relu(self.conv1(x))
+        x = F.leaky_relu(self.conv2(x))
+        x = F.leaky_relu(self.conv3(x))
+        x = F.leaky_relu(self.conv4(x))
+        x = F.leaky_relu(self.conv5(x))
+
+        # push text embeddings trough fc layer and increase dimension
+        emb = F.leaky_relu(self.fc1_emb(emb))
+        emb = F.leaky_relu(self.fc2_emb(emb))
+
+        # concatenate emb with x
+        x = torch.cat([x, emb])
+
+        x = F.leaky_relu(self.fc1(x))
+        x = F.leaky_relu(self.fc2(x))
+        x = self.fc3(x)
+
+        return F.sigmoid(x)

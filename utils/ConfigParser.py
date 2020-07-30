@@ -44,7 +44,7 @@ def config_parser(config_file, print_config=True):
         raise Exception("Check config file - No directories within config file")
 
     hp_ = cfg.get('hyper_parameters')
-    dir_ = cfg.get('directories')
+    dir_ = cfg.get('directores')
 
     if 'lr' not in hp_:
         raise Exception("Check config file - lr not given")
@@ -113,6 +113,39 @@ def retrieval_config_parser(config_file, print_config=True):
         raise Exception("Check config file - shape_model_load dir not given")
     if 'output' not in dir_:
         raise Exception("Check config file - output dir not given")
+    
+    print_symbol()
+    if print_config:
+        pretty_config_print(cfg)
+
+    return cfg 
+
+
+def gan_config_parser(config_file, print_config=True):
+    with open(config_file, "r") as ymlfile: 
+        cfg = yaml.load(ymlfile)
+
+    # check if all data are given in config file
+    if 'name' not in cfg:
+        raise Exception("Check config file - No name within config file")
+    if 'hyper_parameters' not in cfg:
+        raise Exception("Check config file - No hyper parameters within config file")
+    if 'directories' not in cfg:
+        raise Exception("Check config file - No directories within config file")
+
+    hp_ = cfg.get('hyper_parameters')
+    dir_ = cfg.get('directories')
+
+    if 'train_labels' not in dir_:
+        raise Exception("Check config file - train_labels dir not given")
+    if 'vocabulary' not in dir_:
+        raise Exception("Check config file - vocabulary dir not given")
+    if 'text_model_load' not in dir_:
+        raise Exception("Check config file - text_model_load dir not given")
+    if 'model_save' not in dir_:
+        raise Exception("Check config file - model_save dir not given")
+    if 'tensorboard' not in dir_:
+        raise Exception("Check config file - tensorboard dir not given")
     
     print_symbol()
     if print_config:

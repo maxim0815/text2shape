@@ -1,0 +1,13 @@
+name: "gan"
+hyper_parameters:
+  lr: 0.001
+  bs: 64
+  mom: 0.9
+  wd: 0.0001
+  ep: 100
+directories:
+  train_labels: "data/full_preprocessed.captions.csv"
+  vocabulary: "data/full_voc.csv"
+  text_model_load: "local_results/02_loss_0.1757/text_encoder.pt"
+  model_save: "results/test/"
+  tensorboard: "tensorboard/"

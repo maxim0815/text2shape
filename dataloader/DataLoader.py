@@ -35,14 +35,9 @@ class TripletText2Shape(object):
         self.neg_shape = neg_shape
 
 
-class Loader(object):
+class TextLoader(object):
     """
-    Loader class
-        tries to load given files
-        handles exceptions
-        adds category to shape data
-        converts dict{dict{}} to dict{list[]}
-        codes all descriptions to vector
+    Loads just the descriptions
     """
 
     def __init__(self, config):
@@ -51,14 +46,6 @@ class Loader(object):
                 config['directories']['train_labels']).to_dict()
         except:
             sys.exit("ERROR! Loader can't load given labels")
-
-        try:
-            self.shapes = parse_directory_for_nrrd(
-                config['directories']['train_data'])
-            #self.train_data, _ = nrrd.read(config['directories']['train_data'], index_order = 'C')
-        except:
-            sys.exit("ERROR! Loader can't load given data")
-
         try:
             self.txt_vectorization = TxtVectorization(
                 config['directories']['vocabulary'])
@@ -67,29 +54,8 @@ class Loader(object):
 
         self.length_voc = len(self.txt_vectorization.voc_list)
 
-        self.__add_category_to_shape()
         self.__description_to_lists()
         self.__description_to_vector()
-
-    def __add_category_to_shape(self):
-        """
-        shape is needed for
-            calculating the ndcg
-            smart batches
-        """
-
-        category = list()
-        for _, shape_id in enumerate(self.shapes['modelId']):
-            cat = "none"
-            found_category = False
-            for key, value in self.descriptions["modelId"].items():
-                if value == shape_id:
-                    found_category = True
-                    break
-            if found_category == True:
-                cat = self.descriptions['category'][key]
-            category.append(cat)
-        self.shapes['category'] = category
 
     def __description_to_lists(self):
         """
@@ -109,6 +75,52 @@ class Loader(object):
             desc_vector_list.append(self.txt_vectorization.description2vector(
                 desc))
         self.descriptions["description"] = desc_vector_list
+
+
+
+class Loader(TextLoader):
+    """
+    Loader class
+        tries to load given files
+        handles exceptions
+        adds category to shape data
+        converts dict{dict{}} to dict{list[]}
+        codes all descriptions to vector
+    """
+
+    def __init__(self, config):
+        super(Loader, self).__init__(config)
+        try:
+            self.shapes = parse_directory_for_nrrd(
+                config['directories']['train_data'])
+            #self.train_data, _ = nrrd.read(config['directories']['train_data'], index_order = 'C')
+        except:
+            sys.exit("ERROR! Loader can't load given data")
+
+
+        self.__add_category_to_shape()
+
+
+    def __add_category_to_shape(self):
+        """
+        shape is needed for
+            calculating the ndcg
+            smart batches
+        """
+
+        category = list()
+        for _, shape_id in enumerate(self.shapes['modelId']):
+            cat = "none"
+            found_category = False
+            for i, model_id in enumerate(self.descriptions["modelId"]):
+                if model_id == shape_id:
+                    found_category = True
+                    break
+            if found_category == True:
+                cat = self.descriptions['category'][i]
+            category.append(cat)
+        self.shapes['category'] = category
+
 
 
 class DataLoader(object):
