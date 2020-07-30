@@ -130,7 +130,7 @@ def main(config):
 
         # TRAIN
         number_of_batches = int(
-            dataloader.train_data.get_description_length()/dataloader.bs)
+            dataloader.train_data.get_shape_length()/dataloader.bs)
         epoch_train_dict = eval_dict = {"loss": 0.0, "accuracy": 0.0}
         for i in range(number_of_batches):
             print('TRAIN: input {} of {} '.format(
@@ -153,7 +153,7 @@ def main(config):
 
         # EVAL
         number_of_batches = int(
-            dataloader.test_data.get_description_length()/dataloader.bs)
+            dataloader.test_data.get_shape_length()/dataloader.bs)
         epoch_eval_dict = {"loss": 0.0, "accuracy": 0.0, "ndcg": 0.0}
         for i in range(number_of_batches):
             print('EVAL: input {} of {} '.format(
