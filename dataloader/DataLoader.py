@@ -69,7 +69,7 @@ class Loader(object):
         if config['dataset'] == "primitives":
             try:
                 self.shapes, self.descriptions = parse_primitives(
-                    config['directories']['primitives'])
+                    config['directories']['primitives'], config['categorize'])
             except:
                 sys.exit("ERROR! Loader was not able to parse given directory")
             self.__shuffle_data()
@@ -661,7 +661,7 @@ def parse_directory_for_nrrd(path):
     return shapes
 
 
-def parse_primitives(path):
+def parse_primitives(path, categorize):
     """
     generates needed form for training from
     all files given in primitives directory
@@ -689,7 +689,11 @@ def parse_primitives(path):
                 name = file.replace(".nrrd", '')
                 name_list.append(name)
                 splitted = name.split("-")
-                category = splitted[0] + " " + splitted[1]
+                if categorize == "shape_color":
+                    category = splitted[0] + " " + splitted[1]
+                if categorize == "shape":
+                    category = splitted[0]
+                    
                 cat_list.append(category)
                 train_data, _ = nrrd.read(
                     os.path.join(root, file), index_order='C')

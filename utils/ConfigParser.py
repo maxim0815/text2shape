@@ -42,6 +42,8 @@ def config_parser(config_file, print_config=True):
         raise Exception("Check config file - No nns within config file")
     if 'dataset' not in cfg:
         raise Exception("Check config file - No dataset within config file")
+    if 'categorize' not in cfg:
+        raise Exception("Check config file - No categorize within config file")
     if 'directories' not in cfg:
         raise Exception("Check config file - No directories within config file")
     

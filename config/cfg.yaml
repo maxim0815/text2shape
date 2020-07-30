@@ -11,6 +11,7 @@ triplet: ["s2t", "t2s"]     # what kind of triplet should be used for training/e
 metric: ["s2t", "t2s"]      # evaluation metrices
 nns: 20                     # numer of nearest neighbors for evaluation metric
 dataset: "primitives"       # primitives or shapenet
+categorize: "shape"         # shape or shape_color
 directories:
   train_data: "data/nrrd_256_filter_div_32_solid/"
   train_labels: "data/full_preprocessed.captions.csv"
