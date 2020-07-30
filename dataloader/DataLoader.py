@@ -9,6 +9,8 @@ import collections
 import sys
 import os
 
+from sklearn.utils import shuffle
+
 from dataloader.TextDataVectorization import TxtVectorization
 
 
@@ -40,6 +42,7 @@ class Loader(object):
     """
     Loader class
         tries to load given files
+            either primitives ot shapenet data
         handles exceptions
         adds category to shape data
         converts dict{dict{}} to dict{list[]}
@@ -59,15 +62,17 @@ class Loader(object):
                     config['directories']['train_data'])
             except:
                 sys.exit("ERROR! Loader can't load given data")
-            
+
             self.__add_category_to_shape()
             self.__description_to_lists()
-        
+
         if config['dataset'] == "primitives":
             try:
-                self.shapes, self.descriptions = parse_primitives(config['directories']['primitives'])
+                self.shapes, self.descriptions = parse_primitives(
+                    config['directories']['primitives'])
             except:
                 sys.exit("ERROR! Loader was not able to parse given directory")
+            self.__shuffle_data()
 
         try:
             self.txt_vectorization = TxtVectorization(
@@ -117,6 +122,30 @@ class Loader(object):
             desc_vector_list.append(self.txt_vectorization.description2vector(
                 desc))
         self.descriptions["description"] = desc_vector_list
+
+    def __shuffle_data(self):
+        """
+        primitives are sorted -- they need to be shuffled
+        TODO:   here just 
+                    modelId, description and categrory
+                        modelId, data, category
+                not other stuff which is stored within desciption dict
+        """
+
+        id_shuffled, desc_shuffled, cat_shuffled = shuffle(
+            self.descriptions['modelId'], self.descriptions['description'],
+            self.descriptions['category'])
+        self.descriptions['modelId'] = id_shuffled
+        self.descriptions['description'] = desc_shuffled
+        self.descriptions['category'] = cat_shuffled
+
+        id_shuffled, data_shuffled, cat_shuffled = shuffle(
+            self.shapes['modelId'], self.shapes['data'],
+            self.shapes['category'])
+        self.shapes['modelId'] = id_shuffled
+        self.shapes['data'] = data_shuffled
+        self.shapes['category'] = cat_shuffled
+
 
 
 class DataLoader(object):
@@ -189,7 +218,7 @@ class TripletLoader(object):
             train_shapes[key] = d1
             test_shapes[key] = d2
 
-        # remember_id is needed for primitives 
+        # remember_id is needed for primitives
         #       --> mltiple same shapes and we do not want to
         #           add same description multiple times
         remember_id = []
@@ -650,7 +679,7 @@ def parse_primitives(path):
     for root, _, files in os.walk(path):
         for file in files:
             name = root.replace(path, '')
-            splitted = name.split("-") 
+            splitted = name.split("-")
             category = splitted[0] + " " + splitted[1]
             if file.endswith(".nrrd"):
                 train_data, _ = nrrd.read(
@@ -660,13 +689,12 @@ def parse_primitives(path):
                 shapes['category'].append(category)
             if file.endswith(".txt"):
                 # either too stupid or pandas suchs in this case
-                with open(os.path.join(root, file), newline='') as f: 
-                    reader = csv.reader(f) 
+                with open(os.path.join(root, file), newline='') as f:
+                    reader = csv.reader(f)
                     desc_list = list(reader)
                 for desc in desc_list:
                     descriptions['modelId'].append(name)
                     descriptions['description'].append(desc[0])
                     descriptions['category'].append(category)
-    
-    return shapes, descriptions
 
+    return shapes, descriptions

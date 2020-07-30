@@ -53,6 +53,8 @@ class TripletEncoder(object):
         if isinstance(batch[0], TripletText2Shape):
             desc_batch, pos_shape_batch, neg_shape_batch = self.triplet_list_to_tensor(
                 batch)
+            pos_shape_batch.requires_grad_()
+            neg_shape_batch.requires_grad_()
             pos = self.shape_encoder(pos_shape_batch)
             neg = self.shape_encoder(neg_shape_batch)
             anchor = self.text_encoder(desc_batch)
