@@ -40,8 +40,14 @@ def config_parser(config_file, print_config=True):
         raise Exception("Check config file - More than four metrices within config file")
     if 'nns' not in cfg:
         raise Exception("Check config file - No nns within config file")
+    if 'dataset' not in cfg:
+        raise Exception("Check config file - No dataset within config file")
     if 'directories' not in cfg:
         raise Exception("Check config file - No directories within config file")
+    
+    if cfg['dataset'] != "primitives" and cfg['dataset'] != "shapenet":
+        raise Exception("Check config file - dataset must be either primitives or shapenet")
+
 
     hp_ = cfg.get('hyper_parameters')
     dir_ = cfg.get('directories')
@@ -64,6 +70,8 @@ def config_parser(config_file, print_config=True):
         raise Exception("Check config file - train_data dir not given")
     if 'train_labels' not in dir_:
         raise Exception("Check config file - train_labels dir not given")
+    if 'primitives' not in dir_:
+        raise Exception("Check config file - primitives dir not given")
     if 'vocabulary' not in dir_:
         raise Exception("Check config file - vocabulary dir not given")
     if 'text_model_load' not in dir_:

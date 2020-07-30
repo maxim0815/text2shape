@@ -10,9 +10,11 @@ generate_batch: "random"
 triplet: ["s2t", "t2s"]
 metric: ["s2t", "t2s"]
 nns: 20
+dataset: "shapenet"
 directories:
   train_data: "test/test_shapes/"
   train_labels: "test/test_captions.csv"
+  primitives: "data/primitives.v2/"
   vocabulary: "test/test_voc.csv"
   text_model_load: "output/"
   shape_model_load: "output/"
