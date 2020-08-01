@@ -258,6 +258,7 @@ class TripletLoader(object):
             for _ in range(self.bs):
                 rand = np.random.randint(0, self.train_data.get_shape_length())
                 shape_id = self.train_data.shapes["modelId"][rand]
+                shape_category = self.train_data.shapes["category"][rand]
                 shape = self.train_data.shapes['data'][rand]
 
                 pos_id = self.__find_positive_description_id(
@@ -275,7 +276,7 @@ class TripletLoader(object):
                 pos_desc = self.train_data.descriptions["description"][pos_id]
 
                 neg_id = self.__find_negative_description_id(
-                    shape_id, data="train")
+                    shape_category, data="train")
                 neg_desc = self.train_data.descriptions["description"][neg_id]
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
@@ -285,6 +286,7 @@ class TripletLoader(object):
                 rand = np.random.randint(
                     0, self.train_data.get_description_length())
                 desc_id = self.train_data.descriptions['modelId'][rand]
+                desc_category = self.train_data.descriptions['category'][rand]
                 desc = self.train_data.descriptions["description"][rand]
 
                 pos_id = self.__find_positive_shape_id(desc_id, "train")
@@ -301,7 +303,7 @@ class TripletLoader(object):
 
                 pos_shape = self.train_data.shapes['data'][pos_id]
 
-                neg_id = self.__find_negative_shape_id(desc_id, data="train")
+                neg_id = self.__find_negative_shape_id(desc_category, data="train")
                 neg_shape = self.train_data.shapes['data'][neg_id]
 
                 triplet = TripletText2Shape(desc, pos_shape, neg_shape)
@@ -315,6 +317,7 @@ class TripletLoader(object):
             for _ in range(self.bs):
                 rand = np.random.randint(0, self.test_data.get_shape_length())
                 shape_id = self.test_data.shapes["modelId"][rand]
+                shape_category = self.test_data.shapes["category"][rand]
                 shape = self.test_data.shapes['data'][rand]
 
                 pos_id = self.__find_positive_description_id(
@@ -332,7 +335,7 @@ class TripletLoader(object):
                 pos_desc = self.test_data.descriptions["description"][pos_id]
 
                 neg_id = self.__find_negative_description_id(
-                    shape_id, data="test")
+                    shape_category, data="test")
                 neg_desc = self.test_data.descriptions["description"][neg_id]
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
@@ -345,6 +348,7 @@ class TripletLoader(object):
                 rand = np.random.randint(
                     0, self.test_data.get_description_length())
                 desc_id = self.test_data.descriptions["modelId"][rand]
+                desc_category = self.test_data.descriptions["category"][rand]
                 desc = self.test_data.descriptions['description'][rand]
 
                 pos_id = self.__find_positive_shape_id(
@@ -362,7 +366,7 @@ class TripletLoader(object):
                 pos_shape = self.test_data.shapes["data"][pos_id]
 
                 neg_id = self.__find_negative_shape_id(
-                    desc_id, data="test")
+                    desc_category, data="test")
                 neg_shape = self.test_data.shapes["data"][neg_id]
 
                 triplet = TripletText2Shape(desc, pos_shape, neg_shape)
@@ -390,17 +394,17 @@ class TripletLoader(object):
             rand = np.random.randint(0, len(matching_idx))
             return matching_idx[rand]
 
-    def __find_negative_description_id(self, shape_id, data):
+    def __find_negative_description_id(self, shape_category, data):
         if data == "train":
             max_val = len(self.train_data.descriptions["modelId"])
             rand = np.random.randint(0, max_val)
-            while self.train_data.descriptions["modelId"][rand] == shape_id:
+            while self.train_data.descriptions["category"][rand] == shape_category:
                 rand = np.random.randint(0, max_val)
             return rand
         if data == "test":
             max_val = len(self.test_data.descriptions["modelId"])
             rand = np.random.randint(0, max_val)
-            while self.test_data.descriptions["modelId"][rand] == shape_id:
+            while self.test_data.descriptions["category"][rand] == shape_category:
                 rand = np.random.randint(0, max_val)
             return rand
 
@@ -420,17 +424,17 @@ class TripletLoader(object):
             rand = np.random.randint(0, len(matching_idx))
             return matching_idx[rand]
 
-    def __find_negative_shape_id(self, desc_id, data):
+    def __find_negative_shape_id(self, desc_category, data):
         if data == "train":
             max_val = len(self.train_data.shapes["modelId"])
             rand = np.random.randint(0, max_val)
-            while self.train_data.shapes["modelId"][rand] == desc_id:
+            while self.train_data.shapes["category"][rand] == desc_category:
                 rand = np.random.randint(0, max_val)
             return rand
         if data == "test":
             max_val = len(self.test_data.shapes["modelId"])
             rand = np.random.randint(0, max_val)
-            while self.test_data.shapes["modelId"][rand] == desc_id:
+            while self.test_data.shapes["category"][rand] == desc_category:
                 rand = np.random.randint(0, max_val)
             return rand
 
