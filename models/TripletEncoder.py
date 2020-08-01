@@ -4,7 +4,7 @@ import sys
 
 from models.Networks import ShapeEncoder, TextEncoder
 from dataloader.DataLoader import TripletText2Shape, TripletShape2Text
-from utils.Losses import triplet_loss
+from utils.Losses import triplet_loss, lossless_triplet_loss
 
 
 class TripletEncoder(object):
@@ -60,7 +60,7 @@ class TripletEncoder(object):
             anchor = self.text_encoder(desc_batch)
 
         # calculate triplet loss
-        loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
+        loss, dist_pos, dist_neg = lossless_triplet_loss(anchor, pos, neg)
 
         # accuray
         pred = (dist_pos - dist_neg).cpu().data
@@ -100,7 +100,7 @@ class TripletEncoder(object):
             anchor = self.text_encoder(desc_batch)
 
         # calculate triplet loss
-        loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
+        loss, dist_pos, dist_neg = lossless_triplet_loss(anchor, pos, neg)
 
         pred = (dist_pos - dist_neg).cpu().data
         acc = (pred > 0).sum()*1.0/dist_pos.size()[0]
