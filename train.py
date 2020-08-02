@@ -29,17 +29,19 @@ def run_metric(metric_list, n_neighbors, dataloader, encoder):
     ndcg_scores = dict()
     for metric in metric_list:
         if metric == "s2t":
-            rand = np.random.randint(
-                0, dataloader.test_data.get_shape_length())
-            rand_shape = dataloader.test_data.get_shape(rand)
-            closest_idx, _ = find_nn_shape_2_text(encoder.shape_encoder,
-                                                  encoder.text_encoder,
-                                                  rand_shape,
-                                                  dataloader.test_data,
-                                                  n_neighbors)
-            ndcg = calculate_ndcg(
-                closest_idx, rand, dataloader.test_data, n_neighbors, "s2t")
-            ndcg_scores["s2t_ndcg"] = ndcg
+            ndcg = 0
+            for i in range(3):
+                rand = np.random.randint(
+                    0, dataloader.test_data.get_shape_length())
+                rand_shape = dataloader.test_data.get_shape(rand)
+                closest_idx, _ = find_nn_shape_2_text(encoder.shape_encoder,
+                                                    encoder.text_encoder,
+                                                    rand_shape,
+                                                    dataloader.test_data,
+                                                    n_neighbors)
+                ndcg += calculate_ndcg(
+                    closest_idx, rand, dataloader.test_data, n_neighbors, "s2t")
+            ndcg_scores["s2t_ndcg"] = ndcg/(i+1)
 
         if metric == "s2s":
             rand = np.random.randint(
@@ -66,17 +68,19 @@ def run_metric(metric_list, n_neighbors, dataloader, encoder):
             ndcg_scores["t2t_ndcg"] = ndcg
 
         if metric == "t2s":
-            rand = np.random.randint(
-                0, dataloader.test_data.get_description_length())
-            rand_desc = dataloader.test_data.get_description(rand)
-            closest_idx, _ = find_nn_text_2_shape(encoder.text_encoder,
-                                                  encoder.shape_encoder,
-                                                  rand_desc,
-                                                  dataloader.test_data,
-                                                  n_neighbors)
-            ndcg = calculate_ndcg(
-                closest_idx, rand, dataloader.test_data, n_neighbors, "t2s")
-            ndcg_scores["t2s_ndcg"] = ndcg
+            ndcg = 0
+            for i in range(3):
+                rand = np.random.randint(
+                    0, dataloader.test_data.get_description_length())
+                rand_desc = dataloader.test_data.get_description(rand)
+                closest_idx, _ = find_nn_text_2_shape(encoder.text_encoder,
+                                                    encoder.shape_encoder,
+                                                    rand_desc,
+                                                    dataloader.test_data,
+                                                    n_neighbors)
+                ndcg = calculate_ndcg(
+                    closest_idx, rand, dataloader.test_data, n_neighbors, "t2s")
+            ndcg_scores["t2s_ndcg"] = ndcg/(i+1)
 
     return ndcg_scores
 

@@ -199,7 +199,7 @@ class TripletLoader(object):
 
     def __split_train_test(self, loader):
         """
-        split 80/20 pareto ratio
+        split 90/10
         first split shapes
         then look for matching descriptions for shapes and add to corresponding data container
         """
@@ -211,7 +211,7 @@ class TripletLoader(object):
         train_shapes = dict()
         test_shapes = dict()
 
-        end_train = int(len(loader.shapes['modelId'])*0.8)
+        end_train = int(len(loader.shapes['modelId'])*0.9)
         for key, _ in loader.shapes.items():
             d1 = list(loader.shapes[key][:end_train])
             d2 = list(loader.shapes[key][end_train:])
