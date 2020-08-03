@@ -3,6 +3,7 @@
 *.pt
 *.pth
 *.ckpt
+local_results/
 data/
 tools/
 renders/
