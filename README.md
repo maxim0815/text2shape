@@ -43,6 +43,10 @@ ___
   python3 preprocessing/run_preprocessing.py data/captions.tablechair.csv data/full_preprocessed.captions.csv data/full_voc.csv
   ```
 
+  ```python
+  python3 preprocessing/run_preprocessing_primitives.py data/primitives.v2/ "shape" data/vic_primitives primitives_voc.csv
+  ```
+
 ### Learning embeddings
 
 *   set configuration in config/cfg.yaml

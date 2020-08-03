@@ -6,6 +6,7 @@ hyper_parameters:
   wd: 0.0001
   ep: 100
   oversample: 3
+generate_condition: "uni_modal"   # cross_modal or uni_modal
 generate_batch: "random"    # use random or smart batch
 triplet: ["s2t", "t2s"]     # what kind of triplet should be used for training/evaluation
 metric: ["s2t", "t2s"]      # evaluation metrices
@@ -16,7 +17,7 @@ directories:
   train_data: "data/nrrd_256_filter_div_32_solid/"
   train_labels: "data/full_preprocessed.captions.csv"
   primitives: "data/primitives.v2/"
-  vocabulary: "data/full_voc.csv"
+  vocabulary: "data/primitives_voc.csv"
   text_model_load: "output/"
   shape_model_load: "output/"
   model_save: "results/test/"

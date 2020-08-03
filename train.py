@@ -117,6 +117,7 @@ def main(config):
 
     stats_eval = ["loss", "accuracy"]
     best_ndcg_scores = dict()
+    best_eval_loss = np.inf
     for met in metric:
         stats_eval.append(met+"_ndcg")
         best_ndcg_scores[met+"_ndcg"] = 0.0
@@ -144,13 +145,22 @@ def main(config):
             print('TRAIN: input {} of {} '.format(
                 i, number_of_batches), end='\r')
 
-            version = random.choice(triplet_versions)
-
             if config['generate_batch'] == "random":
-                batch = dataloader.get_train_batch(triplet_versions[0])
-                batch_2 = dataloader.get_train_batch(triplet_versions[1])
+                if config['generate_condition'] == "uni_modal":
+                    version = random.choice(triplet_versions)
+                    batch = dataloader.get_train_batch(version)
+                    batch_2 = 0
+                if config['generate_condition'] == "cross_modal":
+                    batch = dataloader.get_train_batch(triplet_versions[0])
+                    batch_2 = dataloader.get_train_batch(triplet_versions[1])
             if config['generate_batch'] == "smart":
-                batch = dataloader.get_train_smart_batch(version)
+                if config['generate_condition'] == "uni_modal":
+                    version = random.choice(triplet_versions)
+                    batch = dataloader.get_train_smart_batch(version)
+                    batch_2 = 0
+                if config['generate_condition'] == "cross_modal":
+                    batch = dataloader.get_train_smart_batch(triplet_versions[0])
+                    batch_2 = dataloader.get_train_smart_batch(triplet_versions[1])
     
             train_dict = trip_enc.update(batch, batch_2)
             epoch_train_dict["loss"] += train_dict["loss"]
@@ -168,12 +178,22 @@ def main(config):
             print('EVAL: input {} of {} '.format(
                 i, number_of_batches), end='\r')
             
-            version = random.choice(triplet_versions)
             if config['generate_batch'] == "random":
-                batch = dataloader.get_test_batch(triplet_versions[0])
-                batch_2 = dataloader.get_test_batch(triplet_versions[1])
+                if config['generate_condition'] == "uni_modal":
+                    version = random.choice(triplet_versions)
+                    batch = dataloader.get_test_batch(version)
+                    batch_2 = 0
+                if config['generate_condition'] == "cross_modal":
+                    batch = dataloader.get_test_batch(triplet_versions[0])
+                    batch_2 = dataloader.get_test_batch(triplet_versions[1])
             if config['generate_batch'] == "smart":
-                batch = dataloader.get_test_smart_batch(version)
+                if config['generate_condition'] == "uni_modal":
+                    version = random.choice(triplet_versions)
+                    batch = dataloader.get_test_smart_batch(version)
+                    batch_2 = 0
+                if config['generate_condition'] == "cross_modal":
+                    batch = dataloader.get_test_smart_batch(triplet_versions[0])
+                    batch_2 = dataloader.get_test_smart_batch(triplet_versions[1])
 
             eval_dict = trip_enc.predict(batch, batch_2)
             epoch_eval_dict["loss"] += eval_dict["loss"]
@@ -194,12 +214,17 @@ def main(config):
         # check if ndcg scores are better than before
         # all metrices musst be better than best one before
 
-        if better_ndcg_scores(ndcg_scores, best_ndcg_scores):
-            for key, _ in ndcg_scores.items():
-                if ndcg_scores[key] >= best_ndcg_scores[key]:
-                    best_ndcg_scores[key] = ndcg_scores[key]
-            print("...new best eval ndcg score(s) --> saving models")
+        if best_eval_loss < eval_dict['loss']:
+            best_eval_loss = eval_dict['loss']
+            print("...new best eval loss --> saving models")
             trip_enc.save_models()
+
+        #if better_ndcg_scores(ndcg_scores, best_ndcg_scores):
+        #    for key, _ in ndcg_scores.items():
+        #        if ndcg_scores[key] >= best_ndcg_scores[key]:
+        #            best_ndcg_scores[key] = ndcg_scores[key]
+        #    print("...new best eval ndcg score(s) --> saving models")
+        #    trip_enc.save_models()
 
     print("FINISHED")
 

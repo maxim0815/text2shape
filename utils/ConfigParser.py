@@ -30,25 +30,38 @@ def config_parser(config_file, print_config=True):
         raise Exception("Check config file - No name within config file")
     if 'hyper_parameters' not in cfg:
         raise Exception("Check config file - No hyper parameters within config file")
+
+    if 'generate_condition' not in cfg:
+        raise Exception("Check config file - No generate condition within config file")
+    if cfg['generate_condition'] != "uni_modal" and cfg['generate_condition'] != "cross_modal":
+        raise Exception("Check config file - generate condition must be either <uni_modal> or <cross_modal>")
+
     if 'generate_batch' not in cfg:
         raise Exception("Check config file - No generate_batch within config file")
+    if cfg['generate_batch'] != "random" and cfg['generate_batch'] != "smart":
+        raise Exception("Check config file - generate batch must be either <random> or <smart>")
+
     if 'triplet' not in cfg:
         raise Exception("Check config file - No triplet within config file")
     if 'metric' not in cfg:
         raise Exception("Check config file - No metric within config file")
     if len(cfg['metric']) > 4:
         raise Exception("Check config file - More than four metrices within config file")
+
     if 'nns' not in cfg:
         raise Exception("Check config file - No nns within config file")
-    if 'dataset' not in cfg:
-        raise Exception("Check config file - No dataset within config file")
-    if 'categorize' not in cfg:
-        raise Exception("Check config file - No categorize within config file")
     if 'directories' not in cfg:
         raise Exception("Check config file - No directories within config file")
-    
+
+    if 'categorize' not in cfg:
+        raise Exception("Check config file - No categorize within config file")
+    if cfg['categorize'] != "shape" and cfg['categorize'] != "shape_color":
+        raise Exception("Check config file - categorize must be either <shape> or <shape_color>")
+
+    if 'dataset' not in cfg:
+        raise Exception("Check config file - No dataset within config file")
     if cfg['dataset'] != "primitives" and cfg['dataset'] != "shapenet":
-        raise Exception("Check config file - dataset must be either primitives or shapenet")
+        raise Exception("Check config file - dataset must be either <primitives> or <shapenet>")
 
 
     hp_ = cfg.get('hyper_parameters')

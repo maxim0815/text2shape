@@ -1,13 +1,16 @@
 name: "retrieval"
-version: ["t2t", "s2t"]
+version: ["t2t", "t2s", "s2t", "s2s"]
 hyper_parameters:
   k: 8  # k nearest neighbor
   n: 3  # n number of random data of which to find nearest neighbor
   bs: 1 # to receive a random triplet
+dataset: "primitives"       # primitives or shapenet
+categorize: "shape"         # shape or shape_color
 directories:
   train_data: "data/few_nrrd_256_filter_div_32_solid/"
   train_labels: "data/few_preprocessed.captions.csv"
-  vocabulary: "data/full_voc.csv"
-  text_model_load: "local_results/02_loss_0.1757/text_encoder.pt"
-  shape_model_load: "local_results/02_loss_0.1757/shape_encoder.pt"
-  output: "local_results/test/"
+  primitives: "data/test_primitives/"
+  vocabulary: "data/primitives_voc.csv"
+  text_model_load: "local_results/cross_modal_bs16/text_encoder.pt"
+  shape_model_load: "local_results/cross_modal_bs16/shape_encoder.pt"
+  output: "local_results/cross_modal_bs16/"
