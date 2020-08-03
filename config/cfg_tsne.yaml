@@ -1,4 +1,4 @@
-name: "retrieval"
+name: "tsne"
 version: ["t2t", "s2t"]
 hyper_parameters:
   k: 8  # k nearest neighbor

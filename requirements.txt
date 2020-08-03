@@ -5,3 +5,4 @@ pynrrd
 PyYAML
 tensorboard
 pandas
+seaborn
