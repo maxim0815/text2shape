@@ -1,9 +1,7 @@
-import torch
 import nrrd
 import csv
 import pandas as pd
 import numpy as np
-import random
 import collections
 
 import sys
@@ -149,12 +147,12 @@ class Loader(object):
 
 
 class DataLoader(object):
-    '''
+    """
     holds either:
         all data    -->     just retrieval
         train data or
         test data
-    '''
+    """
 
     def __init__(self, descriptions, shapes):
         self.descriptions = descriptions

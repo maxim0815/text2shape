@@ -2,7 +2,6 @@ import torch
 
 
 def triplet_loss(a, p, n, p_norm=2, margin=0.7):
-
     """
     :param batch: type = list, batch of random triplets
     :return: mean loss over batch size, norm values

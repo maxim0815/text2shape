@@ -10,6 +10,7 @@ class Evaluation:
         Creates placeholders for the statistics listed in stats to generate tensorboard summaries.
         e.g. stats = ["loss"]
         """
+
         self.tf_writer = SummaryWriter(os.path.join(
             store_dir, "%s-%s" % (name, datetime.now().strftime("%Y%m%d-%H%M%S"))))
 
@@ -24,6 +25,7 @@ class Evaluation:
          Write episode statistics in eval_dict to tensorboard, make sure that the entries in eval_dict are specified in stats.
          e.g. eval_dict = {"loss" : 1e-4}
         """
+        
         for key in eval_dict:
             assert(key in self.stats)
             self.tf_writer.add_scalar(key, eval_dict[key], episode)

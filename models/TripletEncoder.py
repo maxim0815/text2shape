@@ -4,7 +4,7 @@ import sys
 
 from models.Networks import ShapeEncoder, TextEncoder
 from dataloader.DataLoader import TripletText2Shape, TripletShape2Text
-from utils.Losses import triplet_loss, lossless_triplet_loss
+from utils.Losses import triplet_loss
 
 
 class TripletEncoder(object):
