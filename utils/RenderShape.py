@@ -45,6 +45,7 @@ class RenderImage():
         if not os.path.exists(datadir):
             os.makedirs(datadir)
         save_dir = os.path.join(datadir, self.img_name+".png")
+        plt.axis('off')
         plt.savefig(save_dir)
         plt.close()
 
