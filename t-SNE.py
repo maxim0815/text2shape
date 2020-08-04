@@ -21,11 +21,8 @@ def plot_embedding(X, title=None):
     X = (X - x_min) / (x_max - x_min)
 
     plt.figure()
-    ax = plt.subplot(111)
-    for i in range(X.shape[0]):
-        plt.text(X[i, 0], X[i, 1], str(y[i]),
-                 color=plt.cm.Set1(y[i] / 10.),
-                 fontdict={'weight': 'bold', 'size': 9})
+    plt.plot(X[:,0], X[:,1], "ro")
+    # plt.show()
 
     # if hasattr(offsetbox, 'AnnotationBbox'):
     #     # only print thumbnails with matplotlib > 1.0
@@ -54,8 +51,7 @@ def main(config):
     dataloader = RetrievalLoader(config)
 
     descriptions = []
-    # for i in range(dataloader.get_description_length()):
-    for i in range(5):
+    for i in range(dataloader.get_description_length()):
         descriptions.append(dataloader.get_description(i).tolist()[0])
     X_embedded = TSNE(n_components=2).fit_transform(descriptions)
     plot_embedding(X_embedded, "t-SNE embedding")
