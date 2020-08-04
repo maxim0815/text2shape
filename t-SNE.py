@@ -71,6 +71,8 @@ def main(config):
         desc_id = dataloader.descriptions['modelId'][rand[i]]
         idx = find_positive_shape_id(desc_id, dataloader)
         if idx != None:
+            print('plot {} of {} '.format(
+                i, n), end='\r')
             # ax.plot(X[i,0], X[i,1], "ro")
             n_shape = dataloader.get_shape(idx)
             n_shape = n_shape.reshape(32, 32, 32, 4)
@@ -80,7 +82,6 @@ def main(config):
             render.render_voxels(save_directory)
 
             img = plt.imread(save_directory+str(idx)+".png", format='png')
-            print(img.shape)
             img_cropped = img[40:400, 50:540, :]
             imagebox = OffsetImage(img_cropped, zoom=0.1)
             imagebox.image.axes = ax
