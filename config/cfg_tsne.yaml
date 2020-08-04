@@ -1,12 +1,10 @@
 name: "tsne"
 version: ["t2t", "s2t"]
 hyper_parameters:
-  k: 8  # k nearest neighbor
-  n: 3  # n number of random data of which to find nearest neighbor
-  bs: 1 # to receive a random triplet
+  n: 30  # n number of random data to plot
 directories:
-  train_data: "data/nrrd_256_filter_div_32_solid/"
-  train_labels: "data/full_preprocessed.captions.csv"
+  train_data: "data/few_nrrd_256_filter_div_32_solid/"
+  train_labels: "data/few_preprocessed.captions.csv"
   vocabulary: "data/full_voc.csv"
   text_model_load: "results/test/text_encoder.pt"
   shape_model_load: "results/test/shape_encoder.pt"
