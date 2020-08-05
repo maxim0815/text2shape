@@ -6,6 +6,7 @@ hyper_parameters:
   wd: 0.0001
   ep: 0
   oversample: 3
+loss: "margin"  
 generate_condition: "cross_modal" 
 generate_batch: "random"
 triplet: ["s2t", "t2s"]

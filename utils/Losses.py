@@ -36,7 +36,7 @@ def ratio_triplet_loss(a, p, n, p_norm=2):
     
     loss = (torch.exp(n_p)/(n_p + n_n))**2 + (1 - torch.exp(n_n)/(n_p + n_n))**2
 
-    return torch.sum(loss), n_p, n_n
+    return torch.mean(loss), n_p, n_n
 
 
 if __name__ == "__main__":
