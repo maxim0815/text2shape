@@ -29,54 +29,62 @@ def run_metric(metric_list, n_neighbors, dataloader, encoder):
     ndcg_scores = dict()
     for metric in metric_list:
         if metric == "s2t":
-            rand = np.random.randint(
-                0, dataloader.test_data.get_shape_length())
-            rand_shape = dataloader.test_data.get_shape(rand)
-            closest_idx, _ = find_nn_shape_2_text(encoder.shape_encoder,
-                                                  encoder.text_encoder,
-                                                  rand_shape,
-                                                  dataloader.test_data,
-                                                  n_neighbors)
-            ndcg = calculate_ndcg(
-                closest_idx, rand, dataloader.test_data, n_neighbors, "s2t")
-            ndcg_scores["s2t_ndcg"] = ndcg
+            ndcg = 0
+            for i in range(3):
+                rand = np.random.randint(
+                    0, dataloader.test_data.get_shape_length())
+                rand_shape = dataloader.test_data.get_shape(rand)
+                closest_idx, _ = find_nn_shape_2_text(encoder.shape_encoder,
+                                                    encoder.text_encoder,
+                                                    rand_shape,
+                                                    dataloader.test_data,
+                                                    n_neighbors)
+                ndcg += calculate_ndcg(
+                    closest_idx, rand, dataloader.test_data, n_neighbors, "s2t")
+            ndcg_scores["s2t_ndcg"] = ndcg/(i+1)
 
         if metric == "s2s":
-            rand = np.random.randint(
-                0, dataloader.test_data.get_shape_length())
-            rand_shape = dataloader.test_data.get_shape(rand)
-            closest_idx, _ = find_nn_shape_2_shape(encoder.shape_encoder,
-                                                   rand_shape,
-                                                   dataloader.test_data,
-                                                   n_neighbors)
-            ndcg = calculate_ndcg(
-                closest_idx, rand, dataloader.test_data, n_neighbors, "s2s")
-            ndcg_scores["s2s_ndcg"] = ndcg
+            ndcg = 0
+            for i in range(3):
+                rand = np.random.randint(
+                    0, dataloader.test_data.get_shape_length())
+                rand_shape = dataloader.test_data.get_shape(rand)
+                closest_idx, _ = find_nn_shape_2_shape(encoder.shape_encoder,
+                                                    rand_shape,
+                                                    dataloader.test_data,
+                                                    n_neighbors)
+                ndcg += calculate_ndcg(
+                    closest_idx, rand, dataloader.test_data, n_neighbors, "s2s")
+            ndcg_scores["s2s_ndcg"] = ndcg/(i+1)
 
         if metric == "t2t":
-            rand = np.random.randint(
-                0, dataloader.test_data.get_description_length())
-            rand_desc = dataloader.test_data.get_description(rand)
-            closest_idx, _ = find_nn_text_2_text(encoder.text_encoder,
-                                                 rand_desc,
-                                                 dataloader.test_data,
-                                                 n_neighbors)
-            ndcg = calculate_ndcg(
-                closest_idx, rand, dataloader.test_data, n_neighbors, "t2t")
-            ndcg_scores["t2t_ndcg"] = ndcg
+            ndcg = 0
+            for i in range(3):
+                rand = np.random.randint(
+                    0, dataloader.test_data.get_description_length())
+                rand_desc = dataloader.test_data.get_description(rand)
+                closest_idx, _ = find_nn_text_2_text(encoder.text_encoder,
+                                                    rand_desc,
+                                                    dataloader.test_data,
+                                                    n_neighbors)
+                ndcg += calculate_ndcg(
+                    closest_idx, rand, dataloader.test_data, n_neighbors, "t2t")
+            ndcg_scores["t2t_ndcg"] = ndcg/(i+1)
 
         if metric == "t2s":
-            rand = np.random.randint(
-                0, dataloader.test_data.get_description_length())
-            rand_desc = dataloader.test_data.get_description(rand)
-            closest_idx, _ = find_nn_text_2_shape(encoder.text_encoder,
-                                                  encoder.shape_encoder,
-                                                  rand_desc,
-                                                  dataloader.test_data,
-                                                  n_neighbors)
-            ndcg = calculate_ndcg(
-                closest_idx, rand, dataloader.test_data, n_neighbors, "t2s")
-            ndcg_scores["t2s_ndcg"] = ndcg
+            ndcg = 0
+            for i in range(3):
+                rand = np.random.randint(
+                    0, dataloader.test_data.get_description_length())
+                rand_desc = dataloader.test_data.get_description(rand)
+                closest_idx, _ = find_nn_text_2_shape(encoder.text_encoder,
+                                                    encoder.shape_encoder,
+                                                    rand_desc,
+                                                    dataloader.test_data,
+                                                    n_neighbors)
+                ndcg += calculate_ndcg(
+                    closest_idx, rand, dataloader.test_data, n_neighbors, "t2s")
+            ndcg_scores["t2s_ndcg"] = ndcg/(i+1)
 
     return ndcg_scores
 
@@ -109,6 +117,7 @@ def main(config):
 
     stats_eval = ["loss", "accuracy"]
     best_ndcg_scores = dict()
+    best_eval_loss = np.inf
     for met in metric:
         stats_eval.append(met+"_ndcg")
         best_ndcg_scores[met+"_ndcg"] = 0.0
@@ -136,14 +145,29 @@ def main(config):
             print('TRAIN: input {} of {} '.format(
                 i, number_of_batches), end='\r')
 
-            version = random.choice(triplet_versions)
+            generate_batch = config['generate_batch']
+            if generate_batch == "mixed":
+                generate_list = ["random", "smart"]
+                generate_batch = random.choice(generate_list)
 
-            if config['generate_batch'] == "random":
-                batch = dataloader.get_train_batch(version)
-            if config['generate_batch'] == "smart":
-                batch = dataloader.get_train_smart_batch(version)
+            if generate_batch == "random":
+                if config['generate_condition'] == "uni_modal":
+                    version = random.choice(triplet_versions)
+                    batch = dataloader.get_train_batch(version)
+                    batch_2 = 0
+                if config['generate_condition'] == "cross_modal":
+                    batch = dataloader.get_train_batch(triplet_versions[0])
+                    batch_2 = dataloader.get_train_batch(triplet_versions[1])
+            if generate_batch == "smart":
+                if config['generate_condition'] == "uni_modal":
+                    version = random.choice(triplet_versions)
+                    batch = dataloader.get_train_smart_batch(version)
+                    batch_2 = 0
+                if config['generate_condition'] == "cross_modal":
+                    batch = dataloader.get_train_smart_batch(triplet_versions[0])
+                    batch_2 = dataloader.get_train_smart_batch(triplet_versions[1])
     
-            train_dict = trip_enc.update(batch)
+            train_dict = trip_enc.update(batch, batch_2)
             epoch_train_dict["loss"] += train_dict["loss"]
             epoch_train_dict["accuracy"] += train_dict["accuracy"]
 
@@ -159,13 +183,29 @@ def main(config):
             print('EVAL: input {} of {} '.format(
                 i, number_of_batches), end='\r')
             
-            version = random.choice(triplet_versions)
-            if config['generate_batch'] == "random":
-                batch = dataloader.get_test_batch(version)
-            if config['generate_batch'] == "smart":
-                batch = dataloader.get_test_smart_batch(version)
+            generate_batch = config['generate_batch']
+            if generate_batch == "mixed":
+                generate_list = ["random", "smart"]
+                generate_batch = random.choice(generate_list)
 
-            eval_dict = trip_enc.predict(batch)
+            if generate_batch == "random":
+                if config['generate_condition'] == "uni_modal":
+                    version = random.choice(triplet_versions)
+                    batch = dataloader.get_test_batch(version)
+                    batch_2 = 0
+                if config['generate_condition'] == "cross_modal":
+                    batch = dataloader.get_test_batch(triplet_versions[0])
+                    batch_2 = dataloader.get_test_batch(triplet_versions[1])
+            if generate_batch == "smart":
+                if config['generate_condition'] == "uni_modal":
+                    version = random.choice(triplet_versions)
+                    batch = dataloader.get_test_smart_batch(version)
+                    batch_2 = 0
+                if config['generate_condition'] == "cross_modal":
+                    batch = dataloader.get_test_smart_batch(triplet_versions[0])
+                    batch_2 = dataloader.get_test_smart_batch(triplet_versions[1])
+
+            eval_dict = trip_enc.predict(batch, batch_2)
             epoch_eval_dict["loss"] += eval_dict["loss"]
             epoch_eval_dict["accuracy"] += eval_dict["accuracy"]
 
@@ -184,12 +224,17 @@ def main(config):
         # check if ndcg scores are better than before
         # all metrices musst be better than best one before
 
-        if better_ndcg_scores(ndcg_scores, best_ndcg_scores):
-            for key, _ in ndcg_scores.items():
-                if ndcg_scores[key] >= best_ndcg_scores[key]:
-                    best_ndcg_scores[key] = ndcg_scores[key]
-            print("...new best eval ndcg score(s) --> saving models")
+        if best_eval_loss > eval_dict['loss']:
+            best_eval_loss = eval_dict['loss']
+            print("...new best eval loss --> saving models")
             trip_enc.save_models()
+
+        #if better_ndcg_scores(ndcg_scores, best_ndcg_scores):
+        #    for key, _ in ndcg_scores.items():
+        #        if ndcg_scores[key] >= best_ndcg_scores[key]:
+        #            best_ndcg_scores[key] = ndcg_scores[key]
+        #    print("...new best eval ndcg score(s) --> saving models")
+        #    trip_enc.save_models()
 
     print("FINISHED")
 

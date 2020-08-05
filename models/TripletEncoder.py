@@ -32,33 +32,31 @@ class TripletEncoder(object):
         self.optimizer_text = torch.optim.SGD(
             self.text_encoder.parameters(), lr=lr, momentum=mom)
 
-    def update(self, batch):
+    def update(self, batch, batch_2=0):
         '''
         how does the batch looks like???
         so far:
             batch is list of class Triplet
+        batch_2 != 0:
+            one batch t2s and another batch s2t and same time
         '''
         self.shape_encoder.train()
         self.text_encoder.train()
+        if batch_2 == 0:
+            anchor, pos, neg = self.__forward_batch(batch)
+            # calculate triplet loss
+            loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
+        else:
+            anchor_1, pos_1, neg_1 = self.__forward_batch(batch)
+            anchor_2, pos_2, neg_2 = self.__forward_batch(batch_2)
 
-        if isinstance(batch[0], TripletShape2Text):
-            shape_batch, pos_desc_batch, neg_desc_batch = self.triplet_list_to_tensor(
-                batch)
-            # set requires_grad to true
-            shape_batch.requires_grad_()
-            pos = self.text_encoder(pos_desc_batch)
-            neg = self.text_encoder(neg_desc_batch)
-            anchor = self.shape_encoder(shape_batch)
+            loss_1, dist_pos_1, dist_neg_1 = triplet_loss(anchor_1, pos_1, neg_1)
+            loss_2, dist_pos_2, dist_neg_2 = triplet_loss(anchor_2, pos_2, neg_2)
 
-        if isinstance(batch[0], TripletText2Shape):
-            desc_batch, pos_shape_batch, neg_shape_batch = self.triplet_list_to_tensor(
-                batch)
-            pos = self.shape_encoder(pos_shape_batch)
-            neg = self.shape_encoder(neg_shape_batch)
-            anchor = self.text_encoder(desc_batch)
+            loss = loss_1 + loss_2
+            dist_pos = dist_pos_1 + dist_pos_2
+            dist_neg = dist_neg_1 + dist_neg_2
 
-        # calculate triplet loss
-        loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
 
         # accuray
         pred = (dist_pos - dist_neg).cpu().data
@@ -77,28 +75,25 @@ class TripletEncoder(object):
 
         return eval_dict
 
-    def predict(self, batch):
+    def predict(self, batch, batch_2=0):
 
         self.shape_encoder.eval()
         self.text_encoder.eval()
 
-        if isinstance(batch[0], TripletShape2Text):
-            shape_batch, pos_desc_batch, neg_desc_batch = self.triplet_list_to_tensor(
-                batch)
+        if batch_2 == 0:
+            anchor, pos, neg = self.__forward_batch(batch)
+            # calculate triplet loss
+            loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
+        else:
+            anchor_1, pos_1, neg_1 = self.__forward_batch(batch)
+            anchor_2, pos_2, neg_2 = self.__forward_batch(batch_2)
 
-            pos = self.text_encoder(pos_desc_batch)
-            neg = self.text_encoder(neg_desc_batch)
-            anchor = self.shape_encoder(shape_batch)
-        
-        if isinstance(batch[0], TripletText2Shape):
-            desc_batch, pos_shape_batch, neg_shape_batch = self.triplet_list_to_tensor(
-                batch)
-            pos = self.shape_encoder(pos_shape_batch)
-            neg = self.shape_encoder(neg_shape_batch)
-            anchor = self.text_encoder(desc_batch)
+            loss_1, dist_pos_1, dist_neg_1 = triplet_loss(anchor_1, pos_1, neg_1)
+            loss_2, dist_pos_2, dist_neg_2 = triplet_loss(anchor_2, pos_2, neg_2)
 
-        # calculate triplet loss
-        loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
+            loss = loss_1 + loss_2
+            dist_pos = dist_pos_1 + dist_pos_2
+            dist_neg = dist_neg_1 + dist_neg_2
 
         pred = (dist_pos - dist_neg).cpu().data
         acc = (pred > 0).sum()*1.0/dist_pos.size()[0]
@@ -131,6 +126,26 @@ class TripletEncoder(object):
             self.text_encoder.load_state_dict(temp_net)
         except:
             sys.exit("ERROR! Failed loading models into TripletEncoder")
+
+    def __forward_batch(self, batch):
+        if isinstance(batch[0], TripletShape2Text):
+            shape_batch, pos_desc_batch, neg_desc_batch = self.triplet_list_to_tensor(
+                batch)
+            # set requires_grad to true
+            shape_batch.requires_grad_()
+            pos = self.text_encoder(pos_desc_batch)
+            neg = self.text_encoder(neg_desc_batch)
+            anchor = self.shape_encoder(shape_batch)
+
+        if isinstance(batch[0], TripletText2Shape):
+            desc_batch, pos_shape_batch, neg_shape_batch = self.triplet_list_to_tensor(
+                batch)
+            pos_shape_batch.requires_grad_()
+            neg_shape_batch.requires_grad_()
+            pos = self.shape_encoder(pos_shape_batch)
+            neg = self.shape_encoder(neg_shape_batch)
+            anchor = self.text_encoder(desc_batch)
+        return anchor, pos, neg
 
     def triplet_list_to_tensor(self, batch):
         '''
