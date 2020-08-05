@@ -30,6 +30,26 @@ def lossless_triplet_loss(a, p, n, N = 128, beta=128, eps=1e-8):
     return torch.sum(loss), pos_dist, neg_dist
 
 
+def multi_class_npair_loss(a, p, n):
+    """
+    a and p are single samples, while n is a tensor of multiple negative samples
+    """
+    ap = torch.dot(a, p).exp()
+    an = (n @ a).exp().sum()
+    return -torch.log(ap/(ap+an))
+
+
+def nt_xent_loss(a, p, n, tau=2.0):
+    """
+    a and p are single samples, while n is a tensor of multiple negative samples
+    """
+    ap = (torch.dot(a, p) / tau).exp()
+    an = ((n @ a) / tau).exp().sum()
+    return -torch.log(ap / an)
+
+
 if __name__ == "__main__":
     a, p, n = torch.randn((32, 128)), torch.randn((32, 128)), torch.randn((32, 128))
-    print(triplet_loss(a, p, n), triplet_loss(a, p, n)[2].shape)
+    # print(triplet_loss(a, p, n), triplet_loss(a, p, n)[2].shape)
+    # print(multi_class_npair_loss(a[0], p[0], n))
+    # print(nt_xent_loss(a[0], p[0], n))
