@@ -13,11 +13,13 @@ class NatLangPreprocessor():
       each word within description can be saved to list with space as delimitter
     '''
     def __init__(self, csv_dir):
-
-        try:
-            self.csv_data = pd.read_csv(csv_dir)
-        except:
-            sys.exit("ERROR! Preprocessor is not able to read csv file")
+        if type(csv_dir == dict):
+            self.csv_data = csv_dir
+        else:
+            try:
+                self.csv_data = pd.read_csv(csv_dir)
+            except:
+                sys.exit("ERROR! Preprocessor is not able to read csv file")
 
         self.prep_data = dict()
         self.unique_tokens = dict()

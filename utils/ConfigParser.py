@@ -1,5 +1,6 @@
 import yaml
 
+
 def print_symbol():
     print()
     print(19*' ' + '  / / / / / / / /   / / /         / / /  ' + 19*' ')
@@ -9,6 +10,7 @@ def print_symbol():
     print(19*' ' + '    / /         / /        / /    / /    ' + 19*' ')
     print(19*'_' + '___/_/_______/_/_/_/_/_/_____/_/_/_______' + 20*'_')
     print()
+
 
 def pretty_config_print(config):
     print('_' * 37 + "CONFIG" + '_'*37)
@@ -22,26 +24,55 @@ def pretty_config_print(config):
 
 
 def config_parser(config_file, print_config=True):
-    with open(config_file, "r") as ymlfile: 
+    with open(config_file, "r") as ymlfile:
         cfg = yaml.load(ymlfile)
 
     # check if all data are given in config file
     if 'name' not in cfg:
         raise Exception("Check config file - No name within config file")
     if 'hyper_parameters' not in cfg:
-        raise Exception("Check config file - No hyper parameters within config file")
+        raise Exception(
+            "Check config file - No hyper parameters within config file")
+
+    if 'generate_condition' not in cfg:
+        raise Exception(
+            "Check config file - No generate condition within config file")
+    if cfg['generate_condition'] != "uni_modal" and cfg['generate_condition'] != "cross_modal":
+        raise Exception(
+            "Check config file - generate condition must be either <uni_modal> or <cross_modal>")
+
     if 'generate_batch' not in cfg:
-        raise Exception("Check config file - No generate_batch within config file")
+        raise Exception(
+            "Check config file - No generate_batch within config file")
+    if cfg['generate_batch'] != "random" and cfg['generate_batch'] != "smart" and cfg['generate_batch'] != "mixed":
+        raise Exception(
+            "Check config file - generate batch must be either <random> or <smart>")
+
     if 'triplet' not in cfg:
         raise Exception("Check config file - No triplet within config file")
     if 'metric' not in cfg:
         raise Exception("Check config file - No metric within config file")
     if len(cfg['metric']) > 4:
-        raise Exception("Check config file - More than four metrices within config file")
+        raise Exception(
+            "Check config file - More than four metrices within config file")
+
     if 'nns' not in cfg:
         raise Exception("Check config file - No nns within config file")
     if 'directories' not in cfg:
-        raise Exception("Check config file - No directories within config file")
+        raise Exception(
+            "Check config file - No directories within config file")
+
+    if 'categorize' not in cfg:
+        raise Exception("Check config file - No categorize within config file")
+    if cfg['categorize'] != "shape" and cfg['categorize'] != "shape_color":
+        raise Exception(
+            "Check config file - categorize must be either <shape> or <shape_color>")
+
+    if 'dataset' not in cfg:
+        raise Exception("Check config file - No dataset within config file")
+    if cfg['dataset'] != "primitives" and cfg['dataset'] != "shapenet":
+        raise Exception(
+            "Check config file - dataset must be either <primitives> or <shapenet>")
 
     hp_ = cfg.get('hyper_parameters')
     dir_ = cfg.get('directories')
@@ -59,11 +90,12 @@ def config_parser(config_file, print_config=True):
     if 'oversample' not in hp_:
         raise Exception("Check config file - oversample not given")
 
-
     if 'train_data' not in dir_:
         raise Exception("Check config file - train_data dir not given")
     if 'train_labels' not in dir_:
         raise Exception("Check config file - train_labels dir not given")
+    if 'primitives' not in dir_:
+        raise Exception("Check config file - primitives dir not given")
     if 'vocabulary' not in dir_:
         raise Exception("Check config file - vocabulary dir not given")
     if 'text_model_load' not in dir_:
@@ -74,26 +106,29 @@ def config_parser(config_file, print_config=True):
         raise Exception("Check config file - model_save dir not given")
     if 'tensorboard' not in dir_:
         raise Exception("Check config file - tensorboard dir not given")
-    
+
     print_symbol()
     if print_config:
         pretty_config_print(cfg)
 
     return cfg
 
+
 def retrieval_config_parser(config_file, print_config=True):
-    with open(config_file, "r") as ymlfile: 
+    with open(config_file, "r") as ymlfile:
         cfg = yaml.load(ymlfile)
 
     # check if all data are given in config file
     if 'name' not in cfg:
         raise Exception("Check config file - No name within config file")
     if 'hyper_parameters' not in cfg:
-        raise Exception("Check config file - No hyper parameters within config file")
+        raise Exception(
+            "Check config file - No hyper parameters within config file")
     if 'version' not in cfg:
-        raise Exception("Check config file - No version within config file")	
+        raise Exception("Check config file - No version within config file")
     if 'directories' not in cfg:
-        raise Exception("Check config file - No directories within config file")
+        raise Exception(
+            "Check config file - No directories within config file")
 
     hp_ = cfg.get('hyper_parameters')
     dir_ = cfg.get('directories')
@@ -113,7 +148,7 @@ def retrieval_config_parser(config_file, print_config=True):
         raise Exception("Check config file - shape_model_load dir not given")
     if 'output' not in dir_:
         raise Exception("Check config file - output dir not given")
-    
+
     print_symbol()
     if print_config:
         pretty_config_print(cfg)

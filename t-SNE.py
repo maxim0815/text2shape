@@ -32,7 +32,9 @@ def find_positive_shape_id(desc_id, dataloader):
     return matching_idx[rand]
 
 def main(config):
+    # load_directory = config['directories']['text_model_load']
     load_directory = config['directories']['text_model_load']
+
 
     dataloader = RetrievalLoader(config)
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

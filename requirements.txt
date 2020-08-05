@@ -4,4 +4,9 @@ torch
 pynrrd
 PyYAML
 tensorboard
+<<<<<<< HEAD
 pandas
+=======
+pandas
+sklearn
+>>>>>>> 369a6d7ec53611218f2a57d4eb720bce3670e166

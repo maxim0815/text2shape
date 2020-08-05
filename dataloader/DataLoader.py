@@ -1,12 +1,13 @@
-import torch
 import nrrd
+import csv
 import pandas as pd
 import numpy as np
-import random
 import collections
 
 import sys
 import os
+
+from sklearn.utils import shuffle
 
 from dataloader.TextDataVectorization import TxtVectorization
 
@@ -39,6 +40,7 @@ class Loader(object):
     """
     Loader class
         tries to load given files
+            either primitives ot shapenet data
         handles exceptions
         adds category to shape data
         converts dict{dict{}} to dict{list[]}
@@ -46,18 +48,29 @@ class Loader(object):
     """
 
     def __init__(self, config):
-        try:
-            self.descriptions = pd.read_csv(
-                config['directories']['train_labels']).to_dict()
-        except:
-            sys.exit("ERROR! Loader can't load given labels")
+        if config['dataset'] == "shapenet":
+            try:
+                self.descriptions = pd.read_csv(
+                    config['directories']['train_labels']).to_dict()
+            except:
+                sys.exit("ERROR! Loader can't load given labels")
 
-        try:
-            self.shapes = parse_directory_for_nrrd(
-                config['directories']['train_data'])
-            #self.train_data, _ = nrrd.read(config['directories']['train_data'], index_order = 'C')
-        except:
-            sys.exit("ERROR! Loader can't load given data")
+            try:
+                self.shapes = parse_directory_for_nrrd(
+                    config['directories']['train_data'])
+            except:
+                sys.exit("ERROR! Loader can't load given data")
+
+            self.__add_category_to_shape()
+            self.__description_to_lists()
+
+        if config['dataset'] == "primitives":
+            try:
+                self.shapes, self.descriptions = parse_primitives(
+                    config['directories']['primitives'], config['categorize'])
+            except:
+                sys.exit("ERROR! Loader was not able to parse given directory")
+            self.__shuffle_data()
 
         try:
             self.txt_vectorization = TxtVectorization(
@@ -67,8 +80,6 @@ class Loader(object):
 
         self.length_voc = len(self.txt_vectorization.voc_list)
 
-        self.__add_category_to_shape()
-        self.__description_to_lists()
         self.__description_to_vector()
 
     def __add_category_to_shape(self):
@@ -110,14 +121,38 @@ class Loader(object):
                 desc))
         self.descriptions["description"] = desc_vector_list
 
+    def __shuffle_data(self):
+        """
+        primitives are sorted -- they need to be shuffled
+        TODO:   here just 
+                    modelId, description and categrory
+                        modelId, data, category
+                not other stuff which is stored within desciption dict
+        """
+
+        id_shuffled, desc_shuffled, cat_shuffled = shuffle(
+            self.descriptions['modelId'], self.descriptions['description'],
+            self.descriptions['category'])
+        self.descriptions['modelId'] = id_shuffled
+        self.descriptions['description'] = desc_shuffled
+        self.descriptions['category'] = cat_shuffled
+
+        id_shuffled, data_shuffled, cat_shuffled = shuffle(
+            self.shapes['modelId'], self.shapes['data'],
+            self.shapes['category'])
+        self.shapes['modelId'] = id_shuffled
+        self.shapes['data'] = data_shuffled
+        self.shapes['category'] = cat_shuffled
+
+
 
 class DataLoader(object):
-    '''
+    """
     holds either:
         all data    -->     just retrieval
         train data or
         test data
-    '''
+    """
 
     def __init__(self, descriptions, shapes):
         self.descriptions = descriptions
@@ -162,7 +197,7 @@ class TripletLoader(object):
 
     def __split_train_test(self, loader):
         """
-        split 80/20 pareto ratio
+        split 90/10
         first split shapes
         then look for matching descriptions for shapes and add to corresponding data container
         """
@@ -174,29 +209,39 @@ class TripletLoader(object):
         train_shapes = dict()
         test_shapes = dict()
 
-        end_train = int(len(loader.shapes['modelId'])*0.8)
+        end_train = int(len(loader.shapes['modelId'])*0.9)
         for key, _ in loader.shapes.items():
             d1 = list(loader.shapes[key][:end_train])
             d2 = list(loader.shapes[key][end_train:])
             train_shapes[key] = d1
             test_shapes[key] = d2
 
+        # remember_id is needed for primitives
+        #       --> mltiple same shapes and we do not want to
+        #           add same description multiple times
+        remember_id = []
         for i, shape_id in enumerate(train_shapes['modelId']):
-            idx = [i for i, x in enumerate(
-                loader.descriptions['modelId']) if x == shape_id]
-            for key, val_list in loader.descriptions.items():
-                for id in idx:
-                    train_descriptions[key].append(val_list[id])
+            if shape_id not in remember_id:
+                idx = [i for i, x in enumerate(
+                    loader.descriptions['modelId']) if x == shape_id]
+                for key, val_list in loader.descriptions.items():
+                    for id in idx:
+                        train_descriptions[key].append(val_list[id])
+                remember_id.append(shape_id)
 
             print("Generate train split {} of {}".format(
                 i, len(train_shapes['modelId'])), end='\r')
         print()
+
+        remember_id = []
         for i, shape_id in enumerate(test_shapes['modelId']):
-            idx = [i for i, x in enumerate(
-                loader.descriptions['modelId']) if x == shape_id]
-            for key, val_list in loader.descriptions.items():
-                for id in idx:
-                    test_descriptions[key].append(val_list[id])
+            if shape_id not in remember_id:
+                idx = [i for i, x in enumerate(
+                    loader.descriptions['modelId']) if x == shape_id]
+                for key, val_list in loader.descriptions.items():
+                    for id in idx:
+                        test_descriptions[key].append(val_list[id])
+                remember_id.append(shape_id)
 
             print("Generate test split {} of {}".format(
                 i, len(test_shapes['modelId'])), end='\r')
@@ -211,6 +256,7 @@ class TripletLoader(object):
             for _ in range(self.bs):
                 rand = np.random.randint(0, self.train_data.get_shape_length())
                 shape_id = self.train_data.shapes["modelId"][rand]
+                shape_category = self.train_data.shapes["category"][rand]
                 shape = self.train_data.shapes['data'][rand]
 
                 pos_id = self.__find_positive_description_id(
@@ -228,7 +274,7 @@ class TripletLoader(object):
                 pos_desc = self.train_data.descriptions["description"][pos_id]
 
                 neg_id = self.__find_negative_description_id(
-                    shape_id, data="train")
+                    shape_category, data="train")
                 neg_desc = self.train_data.descriptions["description"][neg_id]
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
@@ -238,6 +284,7 @@ class TripletLoader(object):
                 rand = np.random.randint(
                     0, self.train_data.get_description_length())
                 desc_id = self.train_data.descriptions['modelId'][rand]
+                desc_category = self.train_data.descriptions['category'][rand]
                 desc = self.train_data.descriptions["description"][rand]
 
                 pos_id = self.__find_positive_shape_id(desc_id, "train")
@@ -249,11 +296,12 @@ class TripletLoader(object):
                     desc_id = self.train_data.descriptions['modelId'][rand]
                     desc = self.train_data.descriptions["description"][rand]
 
-                    pos_id = self.__find_positive_shape_id(desc_id, data="train")
+                    pos_id = self.__find_positive_shape_id(
+                        desc_id, data="train")
 
                 pos_shape = self.train_data.shapes['data'][pos_id]
 
-                neg_id = self.__find_negative_shape_id(desc_id, data="train")
+                neg_id = self.__find_negative_shape_id(desc_category, data="train")
                 neg_shape = self.train_data.shapes['data'][neg_id]
 
                 triplet = TripletText2Shape(desc, pos_shape, neg_shape)
@@ -267,6 +315,7 @@ class TripletLoader(object):
             for _ in range(self.bs):
                 rand = np.random.randint(0, self.test_data.get_shape_length())
                 shape_id = self.test_data.shapes["modelId"][rand]
+                shape_category = self.test_data.shapes["category"][rand]
                 shape = self.test_data.shapes['data'][rand]
 
                 pos_id = self.__find_positive_description_id(
@@ -284,7 +333,7 @@ class TripletLoader(object):
                 pos_desc = self.test_data.descriptions["description"][pos_id]
 
                 neg_id = self.__find_negative_description_id(
-                    shape_id, data="test")
+                    shape_category, data="test")
                 neg_desc = self.test_data.descriptions["description"][neg_id]
 
                 triplet = TripletShape2Text(shape, pos_desc, neg_desc)
@@ -294,8 +343,10 @@ class TripletLoader(object):
 
         if version == "t2s":
             for _ in range(self.bs):
-                rand = np.random.randint(0, self.test_data.get_description_length())
+                rand = np.random.randint(
+                    0, self.test_data.get_description_length())
                 desc_id = self.test_data.descriptions["modelId"][rand]
+                desc_category = self.test_data.descriptions["category"][rand]
                 desc = self.test_data.descriptions['description'][rand]
 
                 pos_id = self.__find_positive_shape_id(
@@ -313,7 +364,7 @@ class TripletLoader(object):
                 pos_shape = self.test_data.shapes["data"][pos_id]
 
                 neg_id = self.__find_negative_shape_id(
-                    desc_id, data="test")
+                    desc_category, data="test")
                 neg_shape = self.test_data.shapes["data"][neg_id]
 
                 triplet = TripletText2Shape(desc, pos_shape, neg_shape)
@@ -341,17 +392,17 @@ class TripletLoader(object):
             rand = np.random.randint(0, len(matching_idx))
             return matching_idx[rand]
 
-    def __find_negative_description_id(self, shape_id, data):
+    def __find_negative_description_id(self, shape_category, data):
         if data == "train":
             max_val = len(self.train_data.descriptions["modelId"])
             rand = np.random.randint(0, max_val)
-            while self.train_data.descriptions["modelId"][rand] == shape_id:
+            while self.train_data.descriptions["category"][rand] == shape_category:
                 rand = np.random.randint(0, max_val)
             return rand
         if data == "test":
             max_val = len(self.test_data.descriptions["modelId"])
             rand = np.random.randint(0, max_val)
-            while self.test_data.descriptions["modelId"][rand] == shape_id:
+            while self.test_data.descriptions["category"][rand] == shape_category:
                 rand = np.random.randint(0, max_val)
             return rand
 
@@ -371,17 +422,17 @@ class TripletLoader(object):
             rand = np.random.randint(0, len(matching_idx))
             return matching_idx[rand]
 
-    def __find_negative_shape_id(self, desc_id, data):
+    def __find_negative_shape_id(self, desc_category, data):
         if data == "train":
             max_val = len(self.train_data.shapes["modelId"])
             rand = np.random.randint(0, max_val)
-            while self.train_data.shapes["modelId"][rand] == desc_id:
+            while self.train_data.shapes["category"][rand] == desc_category:
                 rand = np.random.randint(0, max_val)
             return rand
         if data == "test":
             max_val = len(self.test_data.shapes["modelId"])
             rand = np.random.randint(0, max_val)
-            while self.test_data.shapes["modelId"][rand] == desc_id:
+            while self.test_data.shapes["category"][rand] == desc_category:
                 rand = np.random.randint(0, max_val)
             return rand
 
@@ -610,3 +661,60 @@ def parse_directory_for_nrrd(path):
         i += 1
 
     return shapes
+
+
+def parse_primitives(path, categorize):
+    """
+    generates needed form for training from
+    all files given in primitives directory
+    each folder contains:
+        10 shapes
+        between 20 and a few hunded descriptions
+    """
+
+    shapes = dict()
+    shapes['modelId'] = []
+    shapes['data'] = []
+    shapes['category'] = []
+    descriptions = dict()
+    descriptions['modelId'] = []
+    descriptions['description'] = []
+    descriptions['category'] = []
+
+    for root, _, files in os.walk(path):
+        # used later to share descriptions between shapes
+        name_list = []
+        cat_list = []
+        desc_list = []
+        for file in files:
+            if file.endswith(".nrrd"):
+                name = file.replace(".nrrd", '')
+                name_list.append(name)
+                splitted = name.split("-")
+                if categorize == "shape_color":
+                    category = splitted[0] + " " + splitted[1]
+                if categorize == "shape":
+                    category = splitted[0]
+                    
+                cat_list.append(category)
+                train_data, _ = nrrd.read(
+                    os.path.join(root, file), index_order='C')
+                shapes['modelId'].append(name)
+                shapes['data'].append(train_data)
+                shapes['category'].append(category)
+
+            if file.endswith(".txt"):
+                # either too stupid or pandas suchs in this case
+                with open(os.path.join(root, file), newline='') as f:
+                    reader = csv.reader(f)
+                    desc_list = list(reader)
+        
+        # share the descriptions across shapes
+        if len(desc_list) != 0:
+            for desc in desc_list:
+                choice = np.random.randint(0, len(name_list))
+                descriptions['modelId'].append(name_list[choice])
+                descriptions['description'].append(desc[0])
+                descriptions['category'].append(cat_list[choice])
+
+    return shapes, descriptions
