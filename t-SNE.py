@@ -6,6 +6,7 @@ import torch
 import matplotlib.pyplot as plt
 
 from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+from matplotlib.pyplot import figure
 from sklearn.manifold import TSNE
 
 from utils.RenderShape import RenderImage
@@ -58,7 +59,9 @@ def main(config):
     X = (X_embedded - x_min) / (x_max - x_min)
 
     # plt.figure()
-    fig, ax = plt.subplots()
+    # plt.rcParams["figure.figsize"] = (30,24)
+
+    fig, ax = plt.subplots(figsize=(30,20))
 
     save_directory = config["directories"]["output"]
     folder = "tsne_img" + str("/")
@@ -94,8 +97,8 @@ def main(config):
             ax.add_artist(ab)
 
     # Fix the display limits to see everything
-    # ax.set_xlim(0, 1)
-    # ax.set_ylim(0, 1)
+    ax.set_xlim(-0.1, 1.1)
+    ax.set_ylim(-0.1, 1.1)
 
     # plt.show()
 
