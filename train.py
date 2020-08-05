@@ -224,7 +224,7 @@ def main(config):
         # check if ndcg scores are better than before
         # all metrices musst be better than best one before
 
-        if best_eval_loss < eval_dict['loss']:
+        if best_eval_loss > eval_dict['loss']:
             best_eval_loss = eval_dict['loss']
             print("...new best eval loss --> saving models")
             trip_enc.save_models()
