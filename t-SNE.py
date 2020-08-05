@@ -61,7 +61,7 @@ def main(config):
     # plt.figure()
     # plt.rcParams["figure.figsize"] = (30,24)
 
-    fig, ax = plt.subplots(figsize=(12,8))
+    fig, ax = plt.subplots()
 
     save_directory = config["directories"]["output"]
     folder = "tsne_img" + str("/")
