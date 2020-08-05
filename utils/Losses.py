@@ -30,6 +30,15 @@ def lossless_triplet_loss(a, p, n, N = 128, beta=128, eps=1e-8):
     return torch.sum(loss), pos_dist, neg_dist
 
 
+def ratio_triplet_loss(a, p, n, p_norm=2):
+    n_p = torch.norm(a - p, p=p_norm, dim=1, keepdim=True)
+    n_n = torch.norm(a - n, p=p_norm, dim=1, keepdim=True)
+    
+    loss = (torch.exp(n_p)/(n_p + n_n))**2 + (1 - torch.exp(n_n)/(n_p + n_n))**2
+
+    return torch.sum(loss), n_p, n_n
+
+
 if __name__ == "__main__":
     a, p, n = torch.randn((32, 128)), torch.randn((32, 128)), torch.randn((32, 128))
     print(triplet_loss(a, p, n), triplet_loss(a, p, n)[2].shape)
