@@ -145,7 +145,12 @@ def main(config):
             print('TRAIN: input {} of {} '.format(
                 i, number_of_batches), end='\r')
 
-            if config['generate_batch'] == "random":
+            generate_batch = config['generate_batch']
+            if generate_batch == "mixed":
+                generate_list = ["random", "smart"]
+                generate_batch = random.choice(generate_list)
+
+            if generate_batch == "random":
                 if config['generate_condition'] == "uni_modal":
                     version = random.choice(triplet_versions)
                     batch = dataloader.get_train_batch(version)
@@ -153,7 +158,7 @@ def main(config):
                 if config['generate_condition'] == "cross_modal":
                     batch = dataloader.get_train_batch(triplet_versions[0])
                     batch_2 = dataloader.get_train_batch(triplet_versions[1])
-            if config['generate_batch'] == "smart":
+            if generate_batch == "smart":
                 if config['generate_condition'] == "uni_modal":
                     version = random.choice(triplet_versions)
                     batch = dataloader.get_train_smart_batch(version)
@@ -178,7 +183,12 @@ def main(config):
             print('EVAL: input {} of {} '.format(
                 i, number_of_batches), end='\r')
             
-            if config['generate_batch'] == "random":
+            generate_batch = config['generate_batch']
+            if generate_batch == "mixed":
+                generate_list = ["random", "smart"]
+                generate_batch = random.choice(generate_list)
+
+            if generate_batch == "random":
                 if config['generate_condition'] == "uni_modal":
                     version = random.choice(triplet_versions)
                     batch = dataloader.get_test_batch(version)
@@ -186,7 +196,7 @@ def main(config):
                 if config['generate_condition'] == "cross_modal":
                     batch = dataloader.get_test_batch(triplet_versions[0])
                     batch_2 = dataloader.get_test_batch(triplet_versions[1])
-            if config['generate_batch'] == "smart":
+            if generate_batch == "smart":
                 if config['generate_condition'] == "uni_modal":
                     version = random.choice(triplet_versions)
                     batch = dataloader.get_test_smart_batch(version)
