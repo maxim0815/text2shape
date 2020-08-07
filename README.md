@@ -67,3 +67,13 @@ ___
   ```python
   python3 retrieval.py config/cfg_retrieval.yaml
   ```
+
+### run T-SNE
+
+*   set configuration in config/cfg_tsne.yaml
+
+  ```python
+  python3 t-SNE.py config/cfg_tsne.yaml
+  ```
+
+*   result is found in results as tsne.png
