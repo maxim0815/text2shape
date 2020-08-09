@@ -153,4 +153,43 @@ def retrieval_config_parser(config_file, print_config=True):
     if print_config:
         pretty_config_print(cfg)
 
-    return cfg
+    return cfg 
+
+def tsne_config_parser(config_file, print_config=True):
+    with open(config_file, "r") as ymlfile: 
+        cfg = yaml.load(ymlfile)
+
+    # check if all data are given in config file
+    if 'name' not in cfg:
+        raise Exception("Check config file - No name within config file")
+    if 'hyper_parameters' not in cfg:
+        raise Exception("Check config file - No hyper parameters within config file")
+    if 'version' not in cfg:
+        raise Exception("Check config file - No version within config file")	
+    if 'directories' not in cfg:
+        raise Exception("Check config file - No directories within config file")
+
+    hp_ = cfg.get('hyper_parameters')
+    dir_ = cfg.get('directories')
+
+    if 'n' not in hp_:
+        raise Exception("Check config file - n not given")
+
+    if 'train_data' not in dir_:
+        raise Exception("Check config file - train_data dir not given")
+    if 'train_labels' not in dir_:
+        raise Exception("Check config file - train_labels dir not given")
+    if 'vocabulary' not in dir_:
+        raise Exception("Check config file - vocabulary dir not given")
+    if 'text_model_load' not in dir_:
+        raise Exception("Check config file - text_model_load dir not given")
+    if 'shape_model_load' not in dir_:
+        raise Exception("Check config file - shape_model_load dir not given")
+    if 'output' not in dir_:
+        raise Exception("Check config file - output dir not given")
+    
+    print_symbol()
+    if print_config:
+        pretty_config_print(cfg)
+
+    return cfg 

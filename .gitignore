@@ -3,9 +3,11 @@
 *.pt
 *.pth
 *.ckpt
+local_results/
 data/
 tools/
 renders/
+tsne/
 
 # tensorboard logs
 *events.out.tfevents.*
@@ -17,6 +19,9 @@ renders/
 __pycache__/
 *.py[cod]
 *$py.class
+
+# no images
+*.png
 
 # C extensions
 *.so
