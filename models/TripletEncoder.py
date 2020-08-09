@@ -4,7 +4,7 @@ import sys
 
 from models.Networks import ShapeEncoder, TextEncoder
 from dataloader.DataLoader import TripletText2Shape, TripletShape2Text
-from utils.Losses import triplet_loss
+from utils.Losses import triplet_loss, ratio_triplet_loss
 
 
 class TripletEncoder(object):
@@ -26,6 +26,8 @@ class TripletEncoder(object):
         self.load_directory.append(config['directories']['shape_model_load'])
         self.load_directory.append(config['directories']['text_model_load'])
 
+        self.loss = config['loss']
+
         # TODO: maybe each optimizer gets its own params?
         self.optimizer_shape = torch.optim.SGD(
             self.shape_encoder.parameters(), lr=lr, momentum=mom)
@@ -44,14 +46,21 @@ class TripletEncoder(object):
         self.text_encoder.train()
         if batch_2 == 0:
             anchor, pos, neg = self.__forward_batch(batch)
-            # calculate triplet loss
-            loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
+            
+            if self.loss == "margin":
+                loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
+            if self.loss == "ratio":
+                loss, dist_pos, dist_neg = rario_triplet_loss(anchor, pos, neg)
         else:
             anchor_1, pos_1, neg_1 = self.__forward_batch(batch)
             anchor_2, pos_2, neg_2 = self.__forward_batch(batch_2)
 
-            loss_1, dist_pos_1, dist_neg_1 = triplet_loss(anchor_1, pos_1, neg_1)
-            loss_2, dist_pos_2, dist_neg_2 = triplet_loss(anchor_2, pos_2, neg_2)
+            if self.loss == "margin":
+                loss_1, dist_pos_1, dist_neg_1 = triplet_loss(anchor_1, pos_1, neg_1)
+                loss_2, dist_pos_2, dist_neg_2 = triplet_loss(anchor_2, pos_2, neg_2)
+            if self.loss == "ratio":
+                loss_1, dist_pos_1, dist_neg_1 = ratio_triplet_loss(anchor_1, pos_1, neg_1)
+                loss_2, dist_pos_2, dist_neg_2 = ratio_triplet_loss(anchor_2, pos_2, neg_2)
 
             loss = loss_1 + loss_2
             dist_pos = dist_pos_1 + dist_pos_2
@@ -82,14 +91,21 @@ class TripletEncoder(object):
 
         if batch_2 == 0:
             anchor, pos, neg = self.__forward_batch(batch)
-            # calculate triplet loss
-            loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
+            
+            if self.loss == "margin":
+                loss, dist_pos, dist_neg = triplet_loss(anchor, pos, neg)
+            if self.loss == "ratio":
+                loss, dist_pos, dist_neg = rario_triplet_loss(anchor, pos, neg)
         else:
             anchor_1, pos_1, neg_1 = self.__forward_batch(batch)
             anchor_2, pos_2, neg_2 = self.__forward_batch(batch_2)
 
-            loss_1, dist_pos_1, dist_neg_1 = triplet_loss(anchor_1, pos_1, neg_1)
-            loss_2, dist_pos_2, dist_neg_2 = triplet_loss(anchor_2, pos_2, neg_2)
+            if self.loss == "margin":
+                loss_1, dist_pos_1, dist_neg_1 = triplet_loss(anchor_1, pos_1, neg_1)
+                loss_2, dist_pos_2, dist_neg_2 = triplet_loss(anchor_2, pos_2, neg_2)
+            if self.loss == "ratio":
+                loss_1, dist_pos_1, dist_neg_1 = ratio_triplet_loss(anchor_1, pos_1, neg_1)
+                loss_2, dist_pos_2, dist_neg_2 = ratio_triplet_loss(anchor_2, pos_2, neg_2)
 
             loss = loss_1 + loss_2
             dist_pos = dist_pos_1 + dist_pos_2
